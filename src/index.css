@@ -1,0 +1,55 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Cairo", system-ui, sans-serif;
+    background-color: #062038;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #ffd21f;
+    color: #0459aa;
+  }
+
+  :focus-visible {
+    outline: 3px solid #ffd21f;
+    outline-offset: 3px;
+  }
+} */
+
+
+
+@import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@400;600;700;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  direction: rtl;
+}
+
+body {
+  @apply bg-bg text-text-primary font-sans;
+}
+
+/* focus واضح لكل عنصر تفاعلي — مطلوب لإمكانية الوصول */
+:focus-visible {
+  outline: 2px solid theme("colors.accent.DEFAULT");
+  outline-offset: 2px;
+}
