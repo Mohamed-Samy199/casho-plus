@@ -26,9 +26,9 @@ export default function CommissionRulesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold">قواعد العمولة</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          العمولة دي بتتحسب تلقائيًا وقت تسجيل العملية، والموظف يقدر يعدّلها لكل عملية على حدة من
+        <h1 className="text-xl font-bold text-white">قواعد العمولة</h1>
+        <p className="mt-1 text-sm text-white/60">
+          العمولة دي بتتحسب تلقائيًا وقت تسجيل العملية، والموظف يقدر يعدّلها لكل عملية على حدا من
           غير ما تتأثر العمليات التانية.
         </p>
       </div>

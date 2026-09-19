@@ -9,6 +9,7 @@ import KeyClientsPage from "../pages/clients/KeyClientsPage";
 import ClientDetailPage from "../pages/clients/ClientDetailPage";
 import DebtsPage from "../pages/debts/DebtsPage";
 import CapitalPage from "../pages/capital/CapitalPage";
+import MyCapitalPage from "../pages/capital/MyCapitalPage";
 import CommissionRulesPage from "../pages/settings/CommissionRulesPage";
 import UsersPage from "../pages/users/UsersPage";
 import ProfilePage from "../pages/settings/ProfilePage";
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
             element: <AdminRoute />,
             children: [
               { path: "/capital", element: <CapitalPage /> },
+              { path: "/my-capital", element: <MyCapitalPage /> },
               { path: "/settings/commission-rules", element: <CommissionRulesPage /> },
               { path: "/users", element: <UsersPage /> },
             ],

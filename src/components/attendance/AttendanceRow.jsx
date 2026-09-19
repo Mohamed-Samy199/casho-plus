@@ -5,7 +5,14 @@ function formatTime(dateStr) {
 
 function formatHours(checkInAt, checkOutAt) {
   if (!checkInAt || !checkOutAt) return "—";
-  const hours = (new Date(checkOutAt) - new Date(checkInAt)) / (1000 * 60 * 60);
+  const checkIn = new Date(checkInAt);
+  const checkOut = new Date(checkOutAt);
+  let durationMs = checkOut - checkIn;
+
+  // السجل القديم قد يكون مخزنًا بنفس التاريخ رغم أن الانصراف بعد منتصف الليل.
+  if (durationMs < 0) durationMs += 24 * 60 * 60 * 1000;
+
+  const hours = durationMs / (1000 * 60 * 60);
   return `${hours.toFixed(1)} ساعة`;
 }
 

@@ -10,5 +10,7 @@ export const QUERY_KEYS = {
   CAPITAL_SUMMARY: ["capital", "summary"],
   CAPITAL_BY_PARTNER: ["capital", "by-partner"],
   CAPITAL_HISTORY: (filters = {}) => ["capital", "history", filters],
+  MY_CAPITAL: ["capital", "me"],
+  MY_CAPITAL_HISTORY: ["capital", "me", "history"],
   COMMISSION_RULES: ["commission-rules"],
 };

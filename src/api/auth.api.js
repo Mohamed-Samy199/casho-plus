@@ -12,6 +12,14 @@ export const changePassword = (currentPassword, newPassword, newPasswordConfirm)
     .patch("/auth/change-password", { currentPassword, newPassword, newPasswordConfirm })
     .then((res) => res.data.data);
 
+export const addMyPhoneNumber = (phone) =>
+  httpClient.post("/auth/me/phones", { phone }).then((res) => res.data.data.user);
+
+export const removeMyPhoneNumber = (phone) =>
+  httpClient
+    .delete(`/auth/me/phones/${encodeURIComponent(phone)}`)
+    .then((res) => res.data.data.user);
+
 // ── Admin only ────────────────────────────────────────────────
 export const createUser = (data) =>
   httpClient.post("/auth/users", data).then((res) => res.data.data.user);

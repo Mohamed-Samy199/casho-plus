@@ -11,8 +11,10 @@ import { useCreateTransaction } from "../../hooks/transactions/useCreateTransact
 import { CHANNEL_OPTIONS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
+import { useAuthStore } from "../../store/auth.store";
 
 const initialForm = {
+  accountType: "Partner",
   partnerId: "",
   phoneNumber: "",
   channel: CHANNEL_OPTIONS[0]?.value || "",
@@ -27,6 +29,7 @@ const initialForm = {
 
 export default function NewTransactionModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
+  const user = useAuthStore((state) => state.user);
 
   const { data: partners } = usePartners({ isActive: true });
   const { data: clientsResult } = useClients({ isActive: true });
@@ -35,6 +38,10 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   const { mutate: createTransaction, isPending, error } = useCreateTransaction();
 
   const selectedPartner = partners?.find((p) => p._id === form.partnerId);
+  const selectedPhoneNumbers =
+    form.accountType === "User"
+      ? user?.phoneNumbers || []
+      : selectedPartner?.phoneNumbers || [];
   const partnerOptions = (partners || []).map((p) => ({ value: p._id, label: p.name }));
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
 
@@ -45,12 +52,13 @@ export default function NewTransactionModal({ isOpen, onClose }) {
 
     createTransaction(
       {
-        partnerId: form.partnerId,
+        accountType: form.accountType,
+        ...(form.accountType === "Partner" && { partnerId: form.partnerId }),
         phoneNumber: form.phoneNumber,
         channel: form.channel,
         stage: form.stage,
         partyType: form.partyType,
-        partyId: form.partyType === PARTY_TYPES.PARTNER ? form.partnerId : form.partyId,
+        partyId: form.partyId,
         amount: egpToPiasters(form.amount),
         ...(form.commission !== "" && { commission: egpToPiasters(form.commission) }),
         ...(form.agreedDueAt && { agreedDueAt: new Date(form.agreedDueAt).toISOString() }),
@@ -68,25 +76,45 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   return (
     <Modal title="تسجيل عملية جديدة" isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <SearchableSelect
+        {user?.role === "admin" && (
+          <Select
+            label="الحساب المنفذ للعملية"
+            value={form.accountType}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                accountType: e.target.value,
+                partnerId: "",
+                phoneNumber: "",
+                partyId: "",
+              }))
+            }
+            options={[
+              { value: "Partner", label: "محفظة شريك" },
+              { value: "User", label: `محفظتي (${user.name})` },
+            ]}
+          />
+        )}
+
+        {form.accountType === "Partner" && <SearchableSelect
           label="الشريك"
           placeholder="اختر الشريك"
           value={form.partnerId}
           onChange={(val) => setForm((f) => ({ ...f, partnerId: val, phoneNumber: "" }))}
           options={partnerOptions}
           required
-        />
+        />}
 
         <Select
           label="الرقم/الشريحة"
           placeholder="اختر الرقم"
           value={form.phoneNumber}
           onChange={update("phoneNumber")}
-          options={(selectedPartner?.phoneNumbers || []).map((phone) => ({
+          options={selectedPhoneNumbers.map((phone) => ({
             value: phone,
             label: phone,
           }))}
-          disabled={!selectedPartner}
+          disabled={form.accountType === "Partner" ? !selectedPartner : !user?.phoneNumbers?.length}
           required
         />
 

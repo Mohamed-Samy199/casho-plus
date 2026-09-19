@@ -8,39 +8,51 @@ import OpeningBalanceModal from "../../components/capital/OpeningBalanceModal";
 import { useBalanceHistory } from "../../hooks/capital/useBalanceHistory";
 import { formatEGP } from "../../utils/money";
 import { CHANNEL_LABELS } from "../../constants/channels";
+import { useAuthStore } from "../../store/auth.store";
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, description }) {
   return (
-    <Card>
+    <div title={description} className="cursor-help">
+      <Card>
       <p className="text-sm text-text-secondary">{label}</p>
       <p className="mt-2 text-2xl font-bold">{value}</p>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
 export default function CapitalPage() {
   const [isOpeningBalanceOpen, setIsOpeningBalanceOpen] = useState(false);
-
+  const currentUserId = useAuthStore((state) => state.user?._id);
   const {
     data: summary,
     isLoading: isSummaryLoading,
     isError: isSummaryError,
     error: summaryError,
   } = useCapitalSummary();
-
   const {
     data: byPartner,
     isLoading: isPartnersLoading,
     isError: isPartnersError,
     error: partnersError,
   } = useCapitalByPartner();
-
   const {
     data: history,
     isLoading: isHistoryLoading,
     isError: isHistoryError,
     error: historyError,
   } = useBalanceHistory();
+
+  const orderedAccounts = [...(byPartner || [])].sort((a, b) => {
+    const isCurrentUser = (entry) =>
+      entry.accountType === "User" && String(entry.account?._id) === String(currentUserId);
+    const currentUserOrder = Number(isCurrentUser(b)) - Number(isCurrentUser(a));
+    if (currentUserOrder !== 0) return currentUserOrder;
+
+    // بعد الأدمن الحالي: باقي الأدمن، ثم الشركاء.
+    const accountOrder = { User: 0, Partner: 1 };
+    return (accountOrder[a.accountType] ?? 2) - (accountOrder[b.accountType] ?? 2);
+  });
 
   if (isSummaryLoading || isPartnersLoading || isHistoryLoading) {
     return (
@@ -50,20 +62,11 @@ export default function CapitalPage() {
     );
   }
 
-  if (
-    isSummaryError ||
-    isPartnersError ||
-    isHistoryError ||
-    !summary?.breakdown
-  ) {
+  if (isSummaryError || isPartnersError || isHistoryError || !summary?.breakdown) {
     const error = summaryError || partnersError || historyError;
-
     return (
       <Card>
-        <h1 className="text-lg font-bold text-danger">
-          تعذر تحميل بيانات رأس المال
-        </h1>
-
+        <h1 className="text-lg font-bold text-danger">تعذر تحميل بيانات رأس المال</h1>
         <p className="mt-2 text-sm text-text-secondary">
           {error?.response?.data?.message ||
             error?.message ||
@@ -77,7 +80,6 @@ export default function CapitalPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-white">رأس المال</h1>
-
         <button
           onClick={() => setIsOpeningBalanceOpen(true)}
           className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:bg-accent-hover"
@@ -91,49 +93,52 @@ export default function CapitalPage() {
         <StatCard
           label="رأس المال الكلي"
           value={formatEGP(summary.totalCapital)}
+          description="السيولة الجاهزة + رصيد المحافظ + ديون ليا - ديون عليا."
         />
-
         <StatCard
-          label="السيولة الجاهزة للشغل (النقدية)"
+          label="إجمالي الرصيد المتاح للشغل"
+          value={formatEGP(summary.readyLiquidity + summary.breakdown.totalWalletBalance)}
+          description="السيولة الجاهزة للشغل + رصيد إلكتروني (محافظ)، بدون احتساب أي ديون."
+        />
+        <StatCard
+          label="السيولة الجاهزة للشغل"
           value={formatEGP(summary.readyLiquidity)}
+          description="إجمالي السيولة الموجودة في محافظ الحسابات والمتاحة للاستخدام الفوري."
         />
-
-        <StatCard
-          label="خارج السيولة الفعلية"
-          value={formatEGP(summary.outsideCapital)}
-        />
-
         <StatCard
           label="رصيد إلكتروني (محافظ)"
           value={formatEGP(summary.breakdown.totalWalletBalance)}
+          description="إجمالي أرصدة المحافظ الإلكترونية لكل الشركاء والأدمن."
         />
-
         <StatCard
           label="ديون ليا"
           value={formatEGP(summary.breakdown.owedToMe)}
+          description="مبالغ مستحقة لك من الآخرين، وليست ضمن الرصيد المتاح للشغل."
         />
-
         <StatCard
           label="ديون عليا"
           value={formatEGP(summary.breakdown.owedByMe)}
+          description="مبالغ مستحقة عليك للآخرين، ويتم خصمها من رأس المال الكلي."
         />
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-white">تفاصيل الشركاء</h2>
-
+        <h2 className="mb-3 text-lg font-semibold text-white">تفاصيل الحسابات</h2>
         <div className="space-y-4">
-          {byPartner?.map((entry) => (
-            <Card key={entry.partner._id}>
+          {orderedAccounts.map((entry) => (
+            <Card key={`${entry.accountType}-${entry.account?._id}`}>
               <div className="mb-3 flex items-center justify-between">
-                <p className="font-medium">{entry.partner.name}</p>
-
+                <div>
+                  <p className="font-medium">{entry.account?.name || "-"}</p>
+                  <p className="text-xs text-text-secondary">
+                    {entry.accountType === "User" ? "أدمن" : "شريك"}
+                  </p>
+                </div>
                 <p className="text-sm text-text-secondary">
                   سيولة: {formatEGP(entry.totalLiquidity)} · محفظة:{" "}
                   {formatEGP(entry.totalWalletBalance)}
                 </p>
               </div>
-
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {entry.lines.map((line) => (
                   <div
@@ -141,11 +146,7 @@ export default function CapitalPage() {
                     className="rounded-lg bg-bg-raised px-3 py-2 text-sm"
                   >
                     <p className="font-medium">{line.phoneNumber}</p>
-
-                    <p className="text-text-secondary">
-                      {CHANNEL_LABELS[line.channel]}
-                    </p>
-
+                    <p className="text-text-secondary">{CHANNEL_LABELS[line.channel]}</p>
                     <p className="mt-1">
                       سيولة: {formatEGP(line.liquidityBalance)} · محفظة:{" "}
                       {formatEGP(line.walletBalance)}
@@ -157,97 +158,50 @@ export default function CapitalPage() {
           ))}
         </div>
       </div>
-
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-white">
-          سجل تعديلات الأرصدة
-        </h2>
-
+        <h2 className="mb-3 text-lg font-semibold text-white">سجل تعديلات الأرصدة</h2>
         {!history?.length ? (
           <Card>
-            <p className="text-sm text-text-secondary">
-              لا توجد تعديلات مسجلة بعد.
-            </p>
+            <p className="text-sm text-text-secondary">لا توجد تعديلات مسجلة بعد.</p>
           </Card>
         ) : (
           <Card className="overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-right text-text-secondary">
-                  <th className="px-4 py-3 font-medium">
-                    التاريخ والوقت
-                  </th>
-
-                  <th className="px-4 py-3 font-medium">
-                    الشريك / الرقم
-                  </th>
-
-                  <th className="px-4 py-3 font-medium">
-                    النوع
-                  </th>
-
-                  <th className="px-4 py-3 font-medium">
-                    التغيير
-                  </th>
-
-                  <th className="px-4 py-3 font-medium">
-                    الرصيد بعد العملية
-                  </th>
-
-                  <th className="px-4 py-3 font-medium">
-                    بواسطة
-                  </th>
+                  <th className="px-4 py-3 font-medium">التاريخ والوقت</th>
+                  <th className="px-4 py-3 font-medium">الشريك / الرقم</th>
+                  <th className="px-4 py-3 font-medium">النوع</th>
+                  <th className="px-4 py-3 font-medium">التغيير</th>
+                  <th className="px-4 py-3 font-medium">الرصيد بعد العملية</th>
+                  <th className="px-4 py-3 font-medium">بواسطة</th>
                 </tr>
               </thead>
-
               <tbody>
                 {history.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3">
+                  <tr key={item._id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {new Date(item.createdAt).toLocaleString("ar-EG")}
                     </td>
-
                     <td className="px-4 py-3">
                       <p>{item.partner?.name || "-"}</p>
-                      <p className="text-text-secondary">
-                        {item.phoneNumber}
-                      </p>
+                      <p className="text-text-secondary">{item.phoneNumber}</p>
                     </td>
-
                     <td className="px-4 py-3">
-                      {item.mode === "opening"
-                        ? "إضافة أولية"
-                        : "إضافة رصيد"}
-
-                      {item.note && (
-                        <p className="text-text-secondary">
-                          {item.note}
-                        </p>
-                      )}
+                      {item.mode === "opening" ? "إضافة أولية" : "إضافة رصيد"}
+                      {item.note && <p className="text-text-secondary">{item.note}</p>}
                     </td>
-
                     <td className="px-4 py-3">
                       سيولة: {formatEGP(item.liquidityAmount)}
-                        
-
+                      <br />
                       محفظة: {formatEGP(item.walletAmount)}
                     </td>
-
                     <td className="px-4 py-3">
                       سيولة: {formatEGP(item.liquidityAfter)}
-                        
-
+                      <br />
                       محفظة: {formatEGP(item.walletAfter)}
                     </td>
-
-                    <td className="px-4 py-3">
-                      {item.createdBy?.name ||
-                        item.createdBy?.email ||
-                        "-"}
-                    </td>
+                    <td className="px-4 py-3">{item.createdBy?.name || item.createdBy?.email || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -255,7 +209,6 @@ export default function CapitalPage() {
           </Card>
         )}
       </div>
-
       <OpeningBalanceModal
         isOpen={isOpeningBalanceOpen}
         onClose={() => setIsOpeningBalanceOpen(false)}
