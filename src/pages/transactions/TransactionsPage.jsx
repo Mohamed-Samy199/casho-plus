@@ -9,7 +9,7 @@ import Spinner from "../../components/ui/Spinner";
 
 export default function TransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filters, setFilters] = useState({ page: 1, size: 20 });
+  const [filters, setFilters] = useState({ page: 1, size: 15 });
   const { data, isLoading, isError } = useTransactions(filters);
 
   return (

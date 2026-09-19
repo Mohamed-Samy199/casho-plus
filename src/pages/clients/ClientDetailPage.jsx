@@ -111,6 +111,7 @@ export default function ClientDetailPage() {
                   <th className="px-4 py-3 font-medium">الوصف</th>
                   <th className="px-4 py-3 font-medium">القيمة الأصلية</th>
                   <th className="px-4 py-3 font-medium">المتبقي</th>
+                  <th className="px-4 py-3 font-medium">أثر على رأس المال</th>
                   <th className="px-4 py-3 font-medium">الحالة</th>
                   <th className="px-4 py-3 font-medium"></th>
                 </tr>

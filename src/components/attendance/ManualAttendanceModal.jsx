@@ -16,15 +16,12 @@ export default function ManualAttendanceModal({ isOpen, onClose }) {
 
   const { mutate: upsertAttendance, isPending, error } = useAdminUpsertAttendance();
 
-  const toISO = (dateStr, timeStr, otherTimeStr = null) => {
+  const toISO = (dateStr, timeStr, isCheckout = false) => {
     if (!timeStr) return null;
-
     const date = new Date(`${dateStr}T${timeStr}`);
-    // إذا كان الانصراف أسبق من الحضور، فالانصراف في اليوم التالي.
-    if (otherTimeStr && timeStr < otherTimeStr) {
+    if (isCheckout && checkInTime && timeStr < checkInTime) {
       date.setDate(date.getDate() + 1);
     }
-
     return date.toISOString();
   };
 
@@ -35,7 +32,7 @@ export default function ManualAttendanceModal({ isOpen, onClose }) {
         userId,
         date,
         checkInAt: toISO(date, checkInTime),
-        checkOutAt: toISO(date, checkOutTime, checkInTime),
+        checkOutAt: toISO(date, checkOutTime, true),
         notes,
       },
       {

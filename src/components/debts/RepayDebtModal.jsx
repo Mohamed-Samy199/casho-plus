@@ -75,6 +75,11 @@ export default function RepayDebtModal({ debt, isOpen, onClose }) {
           يأثر على رأس المال (يخصم/يضيف من رصيد شريك فعليًا)
         </label>
 
+        <p className="rounded-lg bg-bg-raised px-3 py-2 text-xs text-text-secondary">
+          لو السداد تم من فلوس شخصية خارج النظام، اترك الاختيار مغلقًا. لو تم من حساب تشغيل، فعّله
+          وحدد الشريك والرقم ونوع الرصيد حتى يظهر الحساب المتأثر في صفحة الديون.
+        </p>
+
         {form.affectsCapital && (
           <div className="space-y-4 rounded-lg border border-border p-3">
             <Select

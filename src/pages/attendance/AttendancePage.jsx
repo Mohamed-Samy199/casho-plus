@@ -16,7 +16,7 @@ import { ROLES } from "../../constants/roles";
 export default function AttendancePage() {
   const isAdmin = useAuthStore((s) => s.user?.role === ROLES.ADMIN);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filters, setFilters] = useState({ page: 1, size: 20 });
+  const [filters, setFilters] = useState({ page: 1, size: 15 });
 
   const { data: users } = useUsers();
   const { data, isLoading, isError } = useAttendanceList(filters);

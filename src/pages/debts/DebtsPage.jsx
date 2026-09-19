@@ -13,7 +13,7 @@ import EmptyState from "../../components/ui/EmptyState";
 export default function DebtsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [repayingDebt, setRepayingDebt] = useState(null);
-  const [filters, setFilters] = useState({ page: 1, size: 20 });
+  const [filters, setFilters] = useState({ page: 1, size: 15 });
   const { data, isLoading, isError } = useDebts(filters);
   const debts = data?.result || [];
 
@@ -48,15 +48,16 @@ export default function DebtsPage() {
 
       {debts.length > 0 && (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full text-sm">
+          <table className="w-full text-base">
             <thead>
-              <tr className="border-b border-border text-right text-text-secondary">
-                <th className="px-4 py-3 font-medium">النوع</th>
-                <th className="px-4 py-3 font-medium">الوصف</th>
-                <th className="px-4 py-3 font-medium">القيمة الأصلية</th>
-                <th className="px-4 py-3 font-medium">المتبقي</th>
-                <th className="px-4 py-3 font-medium">الحالة</th>
-                <th className="px-4 py-3 font-medium"></th>
+              <tr className="border-b border-border text-right text-base text-text-secondary">
+                <th className="px-4 py-4 font-medium">النوع</th>
+                <th className="px-4 py-4 font-medium">الوصف</th>
+                <th className="px-4 py-4 font-medium">القيمة الأصلية</th>
+                <th className="px-4 py-4 font-medium">المتبقي</th>
+                <th className="px-4 py-4 font-medium">أثر على رأس المال</th>
+                <th className="px-4 py-4 font-medium">الحالة</th>
+                <th className="px-4 py-4 font-medium"></th>
               </tr>
             </thead>
             <tbody>
