@@ -19,7 +19,7 @@ export default function KeyClientsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">العملاء الرئيسيون</h1>
+        <h1 className="text-xl font-bold text-white">العملاء الرئيسيون</h1>
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}

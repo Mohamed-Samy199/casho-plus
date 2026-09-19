@@ -9,5 +9,6 @@ export const QUERY_KEYS = {
   DEBT_PAYMENTS: (id) => ["debts", id, "payments"],
   CAPITAL_SUMMARY: ["capital", "summary"],
   CAPITAL_BY_PARTNER: ["capital", "by-partner"],
+  CAPITAL_HISTORY: (filters = {}) => ["capital", "history", filters],
   COMMISSION_RULES: ["commission-rules"],
 };

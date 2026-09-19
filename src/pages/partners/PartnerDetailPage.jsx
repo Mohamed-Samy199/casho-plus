@@ -30,7 +30,7 @@ export default function PartnerDetailPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">{partner.name}</h1>
+      <h1 className="text-xl font-bold text-white">{partner.name}</h1>
 
       <div className="grid grid-cols-2 gap-4">
         <Card>
@@ -45,7 +45,7 @@ export default function PartnerDetailPage() {
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">الأرقام/الشرايح</h2>
+          <h2 className="text-lg font-semibold text-white">الأرقام/الشرايح</h2>
           {isAdmin && (
             <button
               onClick={() => setIsModalOpen(true)}

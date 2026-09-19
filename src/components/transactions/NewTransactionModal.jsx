@@ -162,9 +162,18 @@ export default function NewTransactionModal({ isOpen, onClose }) {
         <Input label="ملاحظات" value={form.notes} onChange={update("notes")} />
 
         {error && (
-          <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-            {error.response?.data?.message || "حدث خطأ أثناء تسجيل العملية."}
-          </p>
+          <div className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
+            <p>{error.response?.data?.message || error.message || "حدث خطأ أثناء تسجيل العملية."}</p>
+            {error.response?.data?.errors?.length > 0 && (
+              <ul className="mt-1 list-inside list-disc">
+                {error.response.data.errors.map((item, index) => (
+                  <li key={`${item.field || "error"}-${index}`}>
+                    {item.message || item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         <SubmitButton isLoading={isPending}>تسجيل العملية</SubmitButton>

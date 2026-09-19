@@ -16,7 +16,7 @@ export default function PartnersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">الشركاء</h1>
+        <h1 className="text-xl font-bold text-white">الشركاء</h1>
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}
