@@ -26,6 +26,7 @@ import Contact from "../components/landing/Contact";
 import Footer from "../components/landing/Footer";
 import Hero from "../components/landing/Hero";
 import RemoteService from "../components/landing/RemoteService";
+import TabletVideoSection from "../components/landing/TabletVideoSection";
 // الـ Hero اللي انت عامله بالفعل — عدّل المسار لو مختلف عندك
 // import Hero from "../components/Hero";
 
@@ -34,6 +35,7 @@ export default function HomePage() {
     <div className="bg-white">
       <Navbar />
       <Hero />
+      <TabletVideoSection />
       <Services />
       <About />
       <RemoteService />

@@ -51,8 +51,9 @@ export default function AddKeyClientModal({ isOpen, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="الميعاد المتفق عليه (ساعة)"
+            label="المدة الافتراضية قبل الاستحقاق"
             type="number"
+            title="المدة الافتراضية قبل الاستحقاق (ساعة)"
             min="1"
             value={agreedHours}
             onChange={(e) => setAgreedHours(e.target.value)}
@@ -60,6 +61,7 @@ export default function AddKeyClientModal({ isOpen, onClose }) {
           <Input
             label="عمولة التأخير الافتراضية (جنيه)"
             type="number"
+            title="عمولة التأخير الافتراضية (جنيه)"
             min="0"
             step="0.01"
             value={lateCommission}

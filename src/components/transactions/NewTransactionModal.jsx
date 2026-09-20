@@ -11,10 +11,8 @@ import { useCreateTransaction } from "../../hooks/transactions/useCreateTransact
 import { CHANNEL_OPTIONS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
-import { useAuthStore } from "../../store/auth.store";
 
 const initialForm = {
-  accountType: "Partner",
   partnerId: "",
   phoneNumber: "",
   channel: CHANNEL_OPTIONS[0]?.value || "",
@@ -24,12 +22,17 @@ const initialForm = {
   amount: "",
   commission: "",
   agreedDueAt: "",
+  lateCommissionPerThousand: "",
   notes: "",
 };
 
+function toLocalDateTimeValue(date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
 export default function NewTransactionModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
-  const user = useAuthStore((state) => state.user);
 
   const { data: partners } = usePartners({ isActive: true });
   const { data: clientsResult } = useClients({ isActive: true });
@@ -38,10 +41,8 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   const { mutate: createTransaction, isPending, error } = useCreateTransaction();
 
   const selectedPartner = partners?.find((p) => p._id === form.partnerId);
-  const selectedPhoneNumbers =
-    form.accountType === "User"
-      ? user?.phoneNumbers || []
-      : selectedPartner?.phoneNumbers || [];
+  const selectedClient = clients.find((c) => c._id === form.partyId);
+  const isKeyClient = form.partyType === PARTY_TYPES.CLIENT && selectedClient?.type === "key_client";
   const partnerOptions = (partners || []).map((p) => ({ value: p._id, label: p.name }));
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
 
@@ -52,16 +53,20 @@ export default function NewTransactionModal({ isOpen, onClose }) {
 
     createTransaction(
       {
-        accountType: form.accountType,
-        ...(form.accountType === "Partner" && { partnerId: form.partnerId }),
+        partnerId: form.partnerId,
         phoneNumber: form.phoneNumber,
         channel: form.channel,
         stage: form.stage,
         partyType: form.partyType,
-        partyId: form.partyId,
+        ...(form.partyType !== PARTY_TYPES.WALK_IN && {
+          partyId: form.partyType === PARTY_TYPES.PARTNER ? form.partnerId : form.partyId,
+        }),
         amount: egpToPiasters(form.amount),
         ...(form.commission !== "" && { commission: egpToPiasters(form.commission) }),
         ...(form.agreedDueAt && { agreedDueAt: new Date(form.agreedDueAt).toISOString() }),
+        ...(isKeyClient && form.lateCommissionPerThousand !== "" && {
+          lateCommissionPerThousand: egpToPiasters(form.lateCommissionPerThousand),
+        }),
         notes: form.notes,
       },
       {
@@ -76,45 +81,25 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   return (
     <Modal title="تسجيل عملية جديدة" isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {user?.role === "admin" && (
-          <Select
-            label="الحساب المنفذ للعملية"
-            value={form.accountType}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                accountType: e.target.value,
-                partnerId: "",
-                phoneNumber: "",
-                partyId: "",
-              }))
-            }
-            options={[
-              { value: "Partner", label: "محفظة شريك" },
-              { value: "User", label: `محفظتي (${user.name})` },
-            ]}
-          />
-        )}
-
-        {form.accountType === "Partner" && <SearchableSelect
+        <SearchableSelect
           label="الشريك"
           placeholder="اختر الشريك"
           value={form.partnerId}
           onChange={(val) => setForm((f) => ({ ...f, partnerId: val, phoneNumber: "" }))}
           options={partnerOptions}
           required
-        />}
+        />
 
         <Select
           label="الرقم/الشريحة"
           placeholder="اختر الرقم"
           value={form.phoneNumber}
           onChange={update("phoneNumber")}
-          options={selectedPhoneNumbers.map((phone) => ({
+          options={(selectedPartner?.phoneNumbers || []).map((phone) => ({
             value: phone,
             label: phone,
           }))}
-          disabled={form.accountType === "Partner" ? !selectedPartner : !user?.phoneNumbers?.length}
+          disabled={!selectedPartner}
           required
         />
 
@@ -143,11 +128,24 @@ export default function NewTransactionModal({ isOpen, onClose }) {
               label="العميل"
               placeholder="دوّر على عميل"
               value={form.partyId}
-              onChange={(val) => setForm((f) => ({ ...f, partyId: val }))}
+              onChange={(val) => {
+                const client = clients.find((item) => item._id === val);
+                const hours = client?.keyClientSettings?.defaultAgreedHours;
+                const defaultFee = client?.keyClientSettings?.defaultLateCommission;
+                setForm((f) => ({
+                  ...f,
+                  partyId: val,
+                  agreedDueAt: hours
+                    ? toLocalDateTimeValue(new Date(Date.now() + hours * 3600000))
+                    : "",
+                  lateCommissionPerThousand:
+                    defaultFee !== undefined ? String(defaultFee / 100) : "5",
+                }));
+              }}
               options={clientOptions}
               required
             />
-          ) : (
+          ) : form.partyType === PARTY_TYPES.PARTNER ? (
             <SearchableSelect
               label="الشريك الآخر"
               placeholder="دوّر على شريك"
@@ -156,6 +154,10 @@ export default function NewTransactionModal({ isOpen, onClose }) {
               options={partnerOptions.filter((o) => o.value !== form.partnerId)}
               required
             />
+          ) : (
+            <div className="flex min-h-10 items-center rounded-lg border border-accent/30 bg-accent-soft px-3 text-sm text-accent">
+              سيتم تسجيل العملية ماليًا فقط بدون إنشاء ملف أو حفظ بيانات للعميل.
+            </div>
           )}
         </div>
 
@@ -180,12 +182,26 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           />
         </div>
 
-        <Input
-          label="الميعاد المتفق عليه (للعملاء الرئيسيين فقط)"
-          type="datetime-local"
-          value={form.agreedDueAt}
-          onChange={update("agreedDueAt")}
-        />
+        {isKeyClient && (
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="تاريخ ووقت السداد المتفق عليه"
+              type="datetime-local"
+              value={form.agreedDueAt}
+              onChange={update("agreedDueAt")}
+              required
+            />
+            <Input
+              label="العمولة لكل 1000 جنيه / يوم"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.lateCommissionPerThousand}
+              onChange={update("lateCommissionPerThousand")}
+              required
+            />
+          </div>
+        )}
 
         <Input label="ملاحظات" value={form.notes} onChange={update("notes")} />
 
