@@ -13,7 +13,10 @@ export default function TransactionRow({ transaction, showDate = false }) {
   return (
     <>
       <tr className="border-b border-border last:border-0">
-        <td className="px-4 py-3">{t.partner?.name || "—"}</td>
+        <td className="px-4 py-3">
+          <span>{t.partner?.name || t.owner?.name || "—"}</span>
+          {t.ownerType === "User" && <span className="mr-2 text-xs text-accent">(أدمن)</span>}
+        </td>
         <td className="px-4 py-3 text-text-secondary">{CHANNEL_LABELS[t.channel]}</td>
         <td className="px-4 py-3 text-text-secondary">{STAGE_LABELS[t.stage]}</td>
         <td className="px-4 py-3 font-medium">{formatEGP(t.amount)}</td>

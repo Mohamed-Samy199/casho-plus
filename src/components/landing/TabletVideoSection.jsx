@@ -1,3 +1,5 @@
+import logo from "../../assets/casho.png";
+
 const VIDEO_SRC = "/videos/casho-demo.mp4";
 
 export default function TabletVideoSection() {
@@ -44,6 +46,11 @@ export default function TabletVideoSection() {
                   </p>
                 </div>
               )}
+              <img
+                src={logo}
+                alt="كاشو بلس"
+                className="pointer-events-none absolute bottom-2 right-2 z-20 w-20 rounded-lg bg-white/90 p-1.5 shadow-lg shadow-black/20 sm:bottom-2 sm:right-2 sm:w-44 sm:p-2"
+              />
             </div>
           </div>
 

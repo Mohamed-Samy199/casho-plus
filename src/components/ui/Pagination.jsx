@@ -14,7 +14,7 @@ export default function Pagination({ currentPage, pages, onPageChange }) {
         <ChevronRight size={16} />
       </button>
 
-      <span className="px-3 text-sm text-text-secondary">
+      <span className="px-3 text-lg text-white">
         صفحة {currentPage} من {pages}
       </span>
 

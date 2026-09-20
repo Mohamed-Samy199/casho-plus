@@ -3,10 +3,11 @@ import * as authApi from "../../api/auth.api";
 
 const USERS_KEY = ["users"];
 
-export function useUsers() {
+export function useUsers(options = {}) {
   return useQuery({
     queryKey: USERS_KEY,
     queryFn: authApi.listUsers,
+    enabled: options.enabled ?? true,
   });
 }
 

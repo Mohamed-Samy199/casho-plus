@@ -196,7 +196,7 @@ export default function CapitalPage() {
         />
 
         <StatCard
-          label="إجمالي الرصيد المتاح للشغل"
+          label="السيولة والرصيد المتاحين للشغل"
           value={formatEGP(usableCapital)}
           description="هذا الكارت = السيولة الجاهزة للشغل + الرصيد الإلكتروني في المحافظ فقط، بدون احتساب أي ديون."
           onDetails={() => setDetailsKey("usableCapital")}

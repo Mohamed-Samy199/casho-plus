@@ -58,10 +58,10 @@ export default function DashboardPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-text-secondary">تحليل اليوم</p>
-          <h2 className="mt-1 text-xl font-black text-text-primary">حركة العمليات</h2>
+          <p className="text-sm font-medium text-white/60">تحليل اليوم</p>
+          <h2 className="mt-1 text-xl font-black text-white">حركة العمليات</h2>
         </div>
-        <Link to="/transactions" className="hidden items-center gap-1 text-sm font-bold text-accent hover:text-accent-hover sm:flex">
+        <Link to="/transactions" className="hidden items-center gap-1 text-sm font-bold text-white/60 hover:text-white sm:flex">
           كل العمليات <ArrowLeft size={16} />
         </Link>
       </div>
@@ -74,10 +74,10 @@ export default function DashboardPage() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-text-secondary">آخر حركة مسجلة</p>
-            <h2 className="mt-1 text-xl font-black text-text-primary">العمليات الأخيرة</h2>
+            <p className="text-sm font-medium text-white/60">آخر حركة مسجلة</p>
+            <h2 className="mt-1 text-xl font-black text-white">العمليات الأخيرة</h2>
           </div>
-          <Link to="/transactions" className="flex items-center gap-1 text-sm font-bold text-accent hover:text-accent-hover">
+          <Link to="/transactions" className="flex items-center gap-1 text-sm font-bold text-white/60 hover:text-white">
             عرض الكل <ArrowLeft size={16} />
           </Link>
         </div>

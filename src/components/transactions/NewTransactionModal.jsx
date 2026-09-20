@@ -6,14 +6,18 @@ import SearchableSelect from "../ui/SearchableSelect";
 import StageSelector from "./StageSelector";
 import SubmitButton from "../ui/SubmitButton";
 import { usePartners } from "../../hooks/partners/usePartners";
+import { useUsers } from "../../hooks/users/useUsers";
 import { useClients } from "../../hooks/clients/useClients";
 import { useCreateTransaction } from "../../hooks/transactions/useCreateTransaction";
 import { CHANNEL_OPTIONS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
+import { useAuthStore } from "../../store/auth.store";
+import { ROLES } from "../../constants/roles";
 
 const initialForm = {
   partnerId: "",
+  ownerType: "Partner",
   phoneNumber: "",
   channel: CHANNEL_OPTIONS[0]?.value || "",
   stage: "",
@@ -35,15 +39,27 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
 
   const { data: partners } = usePartners({ isActive: true });
+  const currentUser = useAuthStore((s) => s.user);
+  const { data: users = [] } = useUsers({ enabled: currentUser?.role === ROLES.ADMIN });
   const { data: clientsResult } = useClients({ isActive: true });
   const clients = clientsResult?.result || [];
 
   const { mutate: createTransaction, isPending, error } = useCreateTransaction();
 
   const selectedPartner = partners?.find((p) => p._id === form.partnerId);
+  const selectedUser = users?.find((u) => u._id === form.partnerId);
+  const selectedOwner = form.ownerType === "User" ? selectedUser : selectedPartner;
   const selectedClient = clients.find((c) => c._id === form.partyId);
   const isKeyClient = form.partyType === PARTY_TYPES.CLIENT && selectedClient?.type === "key_client";
   const partnerOptions = (partners || []).map((p) => ({ value: p._id, label: p.name }));
+  const accountOptions = [
+    ...(partners || []).map((p) => ({ value: `Partner:${p._id}`, label: `${p.name} — شريك` })),
+    ...(currentUser?.role === ROLES.ADMIN
+      ? (users || []).map((u) => ({ value: `User:${u._id}`, label: `${u.name} — أدمن` }))
+      : currentUser
+        ? [{ value: `User:${currentUser._id}`, label: `${currentUser.name} — حسابي` }]
+        : []),
+  ];
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -53,13 +69,14 @@ export default function NewTransactionModal({ isOpen, onClose }) {
 
     createTransaction(
       {
-        partnerId: form.partnerId,
+        ownerType: form.ownerType,
+        ownerId: form.partnerId,
         phoneNumber: form.phoneNumber,
         channel: form.channel,
         stage: form.stage,
         partyType: form.partyType,
         ...(form.partyType !== PARTY_TYPES.WALK_IN && {
-          partyId: form.partyType === PARTY_TYPES.PARTNER ? form.partnerId : form.partyId,
+        partyId: form.partyType === PARTY_TYPES.PARTNER ? form.partyId : form.partyId,
         }),
         amount: egpToPiasters(form.amount),
         ...(form.commission !== "" && { commission: egpToPiasters(form.commission) }),
@@ -81,12 +98,15 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   return (
     <Modal title="تسجيل عملية جديدة" isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <SearchableSelect
-          label="الشريك"
-          placeholder="اختر الشريك"
-          value={form.partnerId}
-          onChange={(val) => setForm((f) => ({ ...f, partnerId: val, phoneNumber: "" }))}
-          options={partnerOptions}
+        <Select
+          label="صاحب الحساب المالي"
+          placeholder="اختر الشريك أو الأدمن"
+          value={`${form.ownerType}:${form.partnerId}`}
+          onChange={(event) => {
+            const [ownerType, ownerId] = event.target.value.split(":");
+            setForm((f) => ({ ...f, ownerType, partnerId: ownerId, phoneNumber: "" }));
+          }}
+          options={accountOptions}
           required
         />
 
@@ -95,11 +115,11 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           placeholder="اختر الرقم"
           value={form.phoneNumber}
           onChange={update("phoneNumber")}
-          options={(selectedPartner?.phoneNumbers || []).map((phone) => ({
+          options={(selectedOwner?.phoneNumbers || []).map((phone) => ({
             value: phone,
             label: phone,
           }))}
-          disabled={!selectedPartner}
+          disabled={!selectedOwner}
           required
         />
 
