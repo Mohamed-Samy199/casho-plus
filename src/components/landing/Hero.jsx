@@ -87,7 +87,7 @@ export default function Hero() {
           </p>
 
           <h1 className="text-4xl font-black leading-[1.15] text-white sm:text-5xl lg:text-[3.4rem]">
-            كل خدماتك المالية
+           كل خدماتك 
             <br />
             في مكان واحد
           </h1>

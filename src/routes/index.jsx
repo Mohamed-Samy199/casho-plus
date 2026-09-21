@@ -18,6 +18,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import AdminRoute from "./AdminRoute";
 import MainLayout from "../components/layout/MainLayout";
 import HomePage from "../pages/Homepage";
+import InternalTransfersPage from "../pages/internal-transfers/InternalTransfersPage";
 // import HomePage from "../pages/HomePage";
 
 export const router = createBrowserRouter([
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
             element: <AdminRoute />,
             children: [
               { path: "/capital", element: <CapitalPage /> },
+              { path: "/internal-transfers", element: <InternalTransfersPage /> },
               { path: "/my-capital", element: <MyCapitalPage /> },
               { path: "/settings/commission-rules", element: <CommissionRulesPage /> },
               { path: "/users", element: <UsersPage /> },
