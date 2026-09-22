@@ -27,12 +27,17 @@ const NAV_ITEMS = [
 
 const ADMIN_NAV_ITEMS = [
   { to: "/capital", label: "رأس المال", icon: Landmark },
+  { to: "/my-capital", label: "ماليتي", icon: Landmark },
   { to: "/internal-transfers", label: "التحويلات الداخلية", icon: Repeat2 },
   { to: "/settings/commission-rules", label: "قواعد العمولة", icon: Settings },
   { to: "/users", label: "الموظفين", icon: UserCog },
 ];
 
-const PERSONAL_NAV_ITEM = { to: "/settings/profile", label: "الإعدادات الشخصية", icon: UserCircle };
+const PERSONAL_NAV_ITEM = {
+  to: "/settings/profile",
+  label: "الإعدادات الشخصية",
+  icon: UserCircle,
+};
 
 export default function Sidebar({ onNavigate }) {
   const role = useAuthStore((s) => s.user?.role);

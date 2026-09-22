@@ -109,8 +109,7 @@ export default function About() {
 
           <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
             كل معاملاتك المالية
-              
-
+              {" "}
             <span className="text-casho-yellow">في مكان واحد</span>
           </h2>
 

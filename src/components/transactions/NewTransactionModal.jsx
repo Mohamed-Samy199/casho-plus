@@ -29,7 +29,6 @@ const initialForm = {
   lateCommissionPerThousand: "",
   notes: "",
 };
-
 function toLocalDateTimeValue(date) {
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
@@ -37,36 +36,56 @@ function toLocalDateTimeValue(date) {
 
 export default function NewTransactionModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
-
   const { data: partners } = usePartners({ isActive: true });
   const currentUser = useAuthStore((s) => s.user);
-  const { data: users = [] } = useUsers({ enabled: currentUser?.role === ROLES.ADMIN });
+  const { data: users = [] } = useUsers({
+    enabled: currentUser?.role === ROLES.ADMIN,
+  });
   const { data: clientsResult } = useClients({ isActive: true });
   const clients = clientsResult?.result || [];
-
-  const { mutate: createTransaction, isPending, error } = useCreateTransaction();
-
+  const {
+    mutate: createTransaction,
+    isPending,
+    error,
+  } = useCreateTransaction();
   const selectedPartner = partners?.find((p) => p._id === form.partnerId);
-  const selectedUser = users?.find((u) => u._id === form.partnerId);
-  const selectedOwner = form.ownerType === "User" ? selectedUser : selectedPartner;
+  const selectedUser =
+    users?.find((u) => u._id === form.partnerId) ||
+    (currentUser?._id === form.partnerId ? currentUser : null);
+  const selectedOwner =
+    form.ownerType === "User" ? selectedUser : selectedPartner;
   const selectedClient = clients.find((c) => c._id === form.partyId);
-  const isKeyClient = form.partyType === PARTY_TYPES.CLIENT && selectedClient?.type === "key_client";
-  const partnerOptions = (partners || []).map((p) => ({ value: p._id, label: p.name }));
+  const isKeyClient =
+    form.partyType === PARTY_TYPES.CLIENT &&
+    selectedClient?.type === "key_client";
+  const partnerOptions = (partners || []).map((p) => ({
+    value: p._id,
+    label: p.name,
+  }));
   const accountOptions = [
-    ...(partners || []).map((p) => ({ value: `Partner:${p._id}`, label: `${p.name} — شريك` })),
+    ...(partners || []).map((p) => ({
+      value: `Partner:${p._id}`,
+      label: `${p.name} — شريك`,
+    })),
     ...(currentUser?.role === ROLES.ADMIN
-      ? (users || []).map((u) => ({ value: `User:${u._id}`, label: `${u.name} — أدمن` }))
+      ? (users || []).map((u) => ({
+          value: `User:${u._id}`,
+          label: `${u.name} — أدمن`,
+        }))
       : currentUser
-        ? [{ value: `User:${currentUser._id}`, label: `${currentUser.name} — حسابي` }]
+        ? [
+            {
+              value: `User:${currentUser._id}`,
+              label: `${currentUser.name} — حسابي`,
+            },
+          ]
         : []),
   ];
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
-
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-
+  const update = (field) => (e) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
   const handleSubmit = (e) => {
     e.preventDefault();
-
     createTransaction(
       {
         ownerType: form.ownerType,
@@ -76,14 +95,21 @@ export default function NewTransactionModal({ isOpen, onClose }) {
         stage: form.stage,
         partyType: form.partyType,
         ...(form.partyType !== PARTY_TYPES.WALK_IN && {
-        partyId: form.partyType === PARTY_TYPES.PARTNER ? form.partyId : form.partyId,
+          partyId: form.partyId,
         }),
         amount: egpToPiasters(form.amount),
-        ...(form.commission !== "" && { commission: egpToPiasters(form.commission) }),
-        ...(form.agreedDueAt && { agreedDueAt: new Date(form.agreedDueAt).toISOString() }),
-        ...(isKeyClient && form.lateCommissionPerThousand !== "" && {
-          lateCommissionPerThousand: egpToPiasters(form.lateCommissionPerThousand),
+        ...(form.commission !== "" && {
+          commission: egpToPiasters(form.commission),
         }),
+        ...(form.agreedDueAt && {
+          agreedDueAt: new Date(form.agreedDueAt).toISOString(),
+        }),
+        ...(isKeyClient &&
+          form.lateCommissionPerThousand !== "" && {
+            lateCommissionPerThousand: egpToPiasters(
+              form.lateCommissionPerThousand,
+            ),
+          }),
         notes: form.notes,
       },
       {
@@ -91,10 +117,9 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           setForm(initialForm);
           onClose();
         },
-      }
+      },
     );
   };
-
   return (
     <Modal title="تسجيل عملية جديدة" isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,12 +129,16 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           value={`${form.ownerType}:${form.partnerId}`}
           onChange={(event) => {
             const [ownerType, ownerId] = event.target.value.split(":");
-            setForm((f) => ({ ...f, ownerType, partnerId: ownerId, phoneNumber: "" }));
+            setForm((f) => ({
+              ...f,
+              ownerType,
+              partnerId: ownerId,
+              phoneNumber: "",
+            }));
           }}
           options={accountOptions}
           required
         />
-
         <Select
           label="الرقم/الشريحة"
           placeholder="اختر الرقم"
@@ -122,27 +151,28 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           disabled={!selectedOwner}
           required
         />
-
         <Select
           label="الوسيلة"
           value={form.channel}
           onChange={update("channel")}
           options={CHANNEL_OPTIONS}
         />
-
         <StageSelector
           value={form.stage}
           onChange={(stage) => setForm((f) => ({ ...f, stage }))}
         />
-
         <div className="grid grid-cols-2 gap-3">
           <Select
             label="نوع الطرف الآخر"
             value={form.partyType}
-            onChange={(e) => setForm((f) => ({ ...f, partyType: e.target.value, partyId: "" }))}
-            options={Object.values(PARTY_TYPES).map((v) => ({ value: v, label: PARTY_TYPE_LABELS[v] }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, partyType: e.target.value, partyId: "" }))
+            }
+            options={Object.values(PARTY_TYPES).map((v) => ({
+              value: v,
+              label: PARTY_TYPE_LABELS[v],
+            }))}
           />
-
           {form.partyType === PARTY_TYPES.CLIENT ? (
             <SearchableSelect
               label="العميل"
@@ -151,12 +181,15 @@ export default function NewTransactionModal({ isOpen, onClose }) {
               onChange={(val) => {
                 const client = clients.find((item) => item._id === val);
                 const hours = client?.keyClientSettings?.defaultAgreedHours;
-                const defaultFee = client?.keyClientSettings?.defaultLateCommission;
+                const defaultFee =
+                  client?.keyClientSettings?.defaultLateCommission;
                 setForm((f) => ({
                   ...f,
                   partyId: val,
                   agreedDueAt: hours
-                    ? toLocalDateTimeValue(new Date(Date.now() + hours * 3600000))
+                    ? toLocalDateTimeValue(
+                        new Date(Date.now() + hours * 3600000),
+                      )
                     : "",
                   lateCommissionPerThousand:
                     defaultFee !== undefined ? String(defaultFee / 100) : "5",
@@ -180,7 +213,6 @@ export default function NewTransactionModal({ isOpen, onClose }) {
             </div>
           )}
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="المبلغ (جنيه)"
@@ -201,7 +233,6 @@ export default function NewTransactionModal({ isOpen, onClose }) {
             onChange={update("commission")}
           />
         </div>
-
         {isKeyClient && (
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -222,24 +253,19 @@ export default function NewTransactionModal({ isOpen, onClose }) {
             />
           </div>
         )}
-
         <Input label="ملاحظات" value={form.notes} onChange={update("notes")} />
-
         {error && (
-          <div className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
-            <p>{error.response?.data?.message || error.message || "حدث خطأ أثناء تسجيل العملية."}</p>
-            {error.response?.data?.errors?.length > 0 && (
-              <ul className="mt-1 list-inside list-disc">
-                {error.response.data.errors.map((item, index) => (
-                  <li key={`${item.field || "error"}-${index}`}>
-                    {item.message || item}
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div
+            className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger"
+            role="alert"
+          >
+            <p>
+              {error.response?.data?.message ||
+                error.message ||
+                "حدث خطأ أثناء تسجيل العملية."}
+            </p>
           </div>
         )}
-
         <SubmitButton isLoading={isPending}>تسجيل العملية</SubmitButton>
       </form>
     </Modal>

@@ -1,28 +1,40 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Mic, Plus } from "lucide-react";
 import { useTransactions } from "../../hooks/transactions/useTransactions";
 import NewTransactionModal from "../../components/transactions/NewTransactionModal";
 import TransactionFilters from "../../components/transactions/TransactionFilters";
 import RecentTransactionsList from "../../components/dashboard/RecentTransactionsList";
 import Pagination from "../../components/ui/Pagination";
 import Spinner from "../../components/ui/Spinner";
+import VoiceWalkInTransactionModal from "../../components/transactions/VoiceWalkInTransactionModal";
 
 export default function TransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filters, setFilters] = useState({ page: 1, size: 15 });
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [filters, setFilters] = useState({ page: 1, size: 20 });
   const { data, isLoading, isError } = useTransactions(filters);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">العمليات</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:bg-accent-hover"
-        >
-          <Plus size={16} />
-          عملية جديدة
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-accent bg-white px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+            title="تسجيل عملية لعميل عابر بالصوت"
+          >
+            <Mic size={16} />
+            تسجيل بالصوت
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:bg-accent-hover"
+          >
+            <Plus size={16} />
+            عملية جديدة
+          </button>
+        </div>
       </div>
 
       <TransactionFilters filters={filters} onChange={setFilters} />
@@ -49,6 +61,7 @@ export default function TransactionsPage() {
       )}
 
       <NewTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <VoiceWalkInTransactionModal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)} />
     </div>
   );
 }
