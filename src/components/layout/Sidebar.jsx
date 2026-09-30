@@ -11,6 +11,7 @@ import {
   UserCircle,
   Clock,
   Repeat2,
+  Wallet
 } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { ROLES } from "../../constants/roles";
@@ -27,7 +28,7 @@ const NAV_ITEMS = [
 
 const ADMIN_NAV_ITEMS = [
   { to: "/capital", label: "رأس المال", icon: Landmark },
-  { to: "/my-capital", label: "ماليتي", icon: Landmark },
+  { to: "/my-capital", label: "ماليتي", icon: Wallet },
   { to: "/internal-transfers", label: "التحويلات الداخلية", icon: Repeat2 },
   { to: "/settings/commission-rules", label: "قواعد العمولة", icon: Settings },
   { to: "/users", label: "الموظفين", icon: UserCog },
