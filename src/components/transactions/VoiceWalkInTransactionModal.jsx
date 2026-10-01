@@ -6,7 +6,10 @@ import Select from "../ui/Select";
 import SubmitButton from "../ui/SubmitButton";
 import { usePartners } from "../../hooks/partners/usePartners";
 import { useUsers } from "../../hooks/users/useUsers";
-import { useCreateTransaction } from "../../hooks/transactions/useCreateTransaction";
+import {
+  createIdempotencyKey,
+  useCreateTransaction,
+} from "../../hooks/transactions/useCreateTransaction";
 import { useCommissionRules } from "../../hooks/commission-rules/useCommissionRules";
 import { CHANNEL_OPTIONS } from "../../constants/channels";
 import { STAGE_OPTIONS } from "../../constants/stages";
@@ -47,6 +50,7 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
   const [listening, setListening] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const recognitionRef = useRef(null);
+  const idempotencyKeyRef = useRef(null);
   const { data: partners = [] } = usePartners({ isActive: true });
   const { data: users = [] } = useUsers({
     enabled: currentUser?.role === ROLES.ADMIN,
@@ -120,6 +124,7 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
   useEffect(() => () => recognitionRef.current?.abort(), []);
   const reset = () => {
     recognitionRef.current?.abort();
+    idempotencyKeyRef.current = null;
     setListening(false);
     setTranscript("");
     setHasResult(false);
@@ -130,9 +135,12 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
     reset();
     onClose();
   };
-  const update = (field) => (event) =>
+  const update = (field) => (event) => {
+    idempotencyKeyRef.current = null;
     setForm((old) => ({ ...old, [field]: event.target.value }));
+  };
   const setAccount = (value) => {
+    idempotencyKeyRef.current = null;
     const [ownerType, ownerId] = value.split(":");
     const account = accounts.find(
       (item) => item.ownerType === ownerType && item._id === ownerId,
@@ -146,6 +154,7 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
     }));
   };
   const setStage = (stage) => {
+    idempotencyKeyRef.current = null;
     const rule = rules.find(
       (item) => item.channel === form.channel && item.stage === stage,
     );
@@ -213,8 +222,11 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
   };
   const submit = (event) => {
     event.preventDefault();
+    const idempotencyKey =
+      idempotencyKeyRef.current || (idempotencyKeyRef.current = createIdempotencyKey());
     createTransaction(
       {
+        data: {
         ownerType: form.ownerType,
         ownerId: form.ownerId,
         phoneNumber: form.phoneNumber,
@@ -225,8 +237,15 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
         ...(form.commission !== "" && {
           commission: egpToPiasters(form.commission),
         }),
+        },
+        idempotencyKey,
       },
-      { onSuccess: close },
+      {
+        onSuccess: () => {
+          idempotencyKeyRef.current = null;
+          close();
+        },
+      },
     );
   };
 

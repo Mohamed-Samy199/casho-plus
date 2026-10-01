@@ -19,6 +19,8 @@ import AdminRoute from "./AdminRoute";
 import MainLayout from "../components/layout/MainLayout";
 import HomePage from "../pages/Homepage";
 import InternalTransfersPage from "../pages/internal-transfers/InternalTransfersPage";
+import DailyReconciliationPage from "../pages/reconciliation/DailyReconciliationPage";
+import TreasuryMovementsPage from "../pages/reconciliation/TreasuryMovementsPage";
 // import HomePage from "../pages/HomePage";
 
 export const router = createBrowserRouter([
@@ -47,6 +49,8 @@ export const router = createBrowserRouter([
             element: <AdminRoute />,
             children: [
               { path: "/capital", element: <CapitalPage /> },
+              { path: "/daily-reconciliation", element: <DailyReconciliationPage /> },
+              { path: "/treasury-movements", element: <TreasuryMovementsPage /> },
               { path: "/internal-transfers", element: <InternalTransfersPage /> },
               { path: "/my-capital", element: <MyCapitalPage /> },
               { path: "/settings/commission-rules", element: <CommissionRulesPage /> },

@@ -7,11 +7,37 @@ export const listTransactions = (params = {}) => {
   return httpClient.get("/transactions", { params: cleanParams }).then((res) => res.data.data);
 };
 
-export const createTransaction = (data) =>
-  httpClient.post("/transactions", data).then((res) => res.data.data);
+export const createTransaction = (data, idempotencyKey) =>
+  httpClient
+    .post("/transactions", data, { headers: { "Idempotency-Key": idempotencyKey } })
+    .then((res) => res.data.data);
 
 export const getTransaction = (id) =>
   httpClient.get(`/transactions/${id}`).then((res) => res.data.data);
 
-export const settleTransaction = (id, amount) =>
-  httpClient.patch(`/transactions/${id}/settle`, { amount }).then((res) => res.data.data);
+export const settleTransaction = (id, amount, idempotencyKey) =>
+  httpClient
+    .patch(
+      `/transactions/${id}/settle`,
+      { amount },
+      { headers: { "Idempotency-Key": idempotencyKey } }
+    )
+    .then((res) => res.data.data);
+
+export const reverseTransaction = (id, reason, idempotencyKey) =>
+  httpClient
+    .post(
+      `/transactions/${id}/reverse`,
+      { reason },
+      { headers: { "Idempotency-Key": idempotencyKey } }
+    )
+    .then((res) => res.data.data);
+
+export const correctTransaction = (id, targetStage, reason, idempotencyKey) =>
+  httpClient
+    .post(
+      `/transactions/${id}/correct`,
+      { targetStage, reason },
+      { headers: { "Idempotency-Key": idempotencyKey } }
+    )
+    .then((res) => res.data.data);

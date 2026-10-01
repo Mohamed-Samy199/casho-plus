@@ -4,7 +4,8 @@ import * as transactionApi from "../../api/transaction.api";
 export function useSettleTransaction(transactionId) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (amount) => transactionApi.settleTransaction(transactionId, amount),
+    mutationFn: ({ amount, idempotencyKey }) =>
+      transactionApi.settleTransaction(transactionId, amount, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });

@@ -19,4 +19,16 @@ export const adjustMyBalance = (data) =>
   httpClient.post("/capital/me/balance-adjustments", data ).then((res) => res.data.data);
 
 export const getMyBalanceHistory = (params) =>
-  httpClient.get("/capital/me/balance-history", { params } ).then((res) => res.data.data);
+  httpClient.get("/capital/me/balance-history", { params }).then((res) => res.data.data);
+
+export const getDailyReconciliation = (date) =>
+  httpClient.get("/capital/reconciliation", { params: { date } }).then((res) => res.data.data);
+
+export const closeDailyReconciliation = (data) =>
+  httpClient.post("/capital/reconciliation/close", data).then((res) => res.data.data);
+
+export const listDailyReconciliations = (params) =>
+  httpClient.get("/capital/reconciliation/history", { params }).then((res) => res.data.data);
+
+export const getTreasuryMovements = (params) =>
+  httpClient.get("/capital/treasury-movements", { params }).then((res) => res.data.data);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
@@ -8,7 +8,10 @@ import SubmitButton from "../ui/SubmitButton";
 import { usePartners } from "../../hooks/partners/usePartners";
 import { useUsers } from "../../hooks/users/useUsers";
 import { useClients } from "../../hooks/clients/useClients";
-import { useCreateTransaction } from "../../hooks/transactions/useCreateTransaction";
+import {
+  createIdempotencyKey,
+  useCreateTransaction,
+} from "../../hooks/transactions/useCreateTransaction";
 import { CHANNEL_OPTIONS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
@@ -36,6 +39,7 @@ function toLocalDateTimeValue(date) {
 
 export default function NewTransactionModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
+  const idempotencyKeyRef = useRef(null);
   const { data: partners } = usePartners({ isActive: true });
   const currentUser = useAuthStore((s) => s.user);
   const { data: users = [] } = useUsers({
@@ -82,38 +86,46 @@ export default function NewTransactionModal({ isOpen, onClose }) {
         : []),
   ];
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
-  const update = (field) => (e) =>
+  const update = (field) => (e) => {
+    idempotencyKeyRef.current = null;
     setForm((f) => ({ ...f, [field]: e.target.value }));
+  };
   const handleSubmit = (e) => {
     e.preventDefault();
+    const idempotencyKey =
+      idempotencyKeyRef.current || (idempotencyKeyRef.current = createIdempotencyKey());
     createTransaction(
       {
-        ownerType: form.ownerType,
-        ownerId: form.partnerId,
-        phoneNumber: form.phoneNumber,
-        channel: form.channel,
-        stage: form.stage,
-        partyType: form.partyType,
-        ...(form.partyType !== PARTY_TYPES.WALK_IN && {
-          partyId: form.partyId,
-        }),
-        amount: egpToPiasters(form.amount),
-        ...(form.commission !== "" && {
-          commission: egpToPiasters(form.commission),
-        }),
-        ...(form.agreedDueAt && {
-          agreedDueAt: new Date(form.agreedDueAt).toISOString(),
-        }),
-        ...(isKeyClient &&
-          form.lateCommissionPerThousand !== "" && {
-            lateCommissionPerThousand: egpToPiasters(
-              form.lateCommissionPerThousand,
-            ),
+        data: {
+          ownerType: form.ownerType,
+          ownerId: form.partnerId,
+          phoneNumber: form.phoneNumber,
+          channel: form.channel,
+          stage: form.stage,
+          partyType: form.partyType,
+          ...(form.partyType !== PARTY_TYPES.WALK_IN && {
+            partyId: form.partyId,
           }),
-        notes: form.notes,
+          amount: egpToPiasters(form.amount),
+          ...(form.commission !== "" && {
+            commission: egpToPiasters(form.commission),
+          }),
+          ...(form.agreedDueAt && {
+            agreedDueAt: new Date(form.agreedDueAt).toISOString(),
+          }),
+          ...(isKeyClient &&
+            form.lateCommissionPerThousand !== "" && {
+              lateCommissionPerThousand: egpToPiasters(
+                form.lateCommissionPerThousand,
+              ),
+            }),
+          notes: form.notes,
+        },
+        idempotencyKey,
       },
       {
         onSuccess: () => {
+          idempotencyKeyRef.current = null;
           setForm(initialForm);
           onClose();
         },

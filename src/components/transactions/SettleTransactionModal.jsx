@@ -8,13 +8,17 @@ import { formatEGP, egpToPiasters } from "../../utils/money";
 export default function SettleTransactionModal({ transaction, isOpen, onClose }) {
   const remaining = transaction.remainingAmount ?? transaction.amount;
   const [amount, setAmount] = useState(String(remaining / 100));
+  const [idempotencyKey, setIdempotencyKey] = useState(null);
   const { mutate, isPending, error } = useSettleTransaction(transaction._id);
 
   const submit = (event) => {
     event.preventDefault();
     const value = egpToPiasters(amount);
     if (!value || value > remaining) return;
-    mutate(value, { onSuccess: onClose });
+    const requestKey =
+      idempotencyKey || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    if (!idempotencyKey) setIdempotencyKey(requestKey);
+    mutate({ amount: value, idempotencyKey: requestKey }, { onSuccess: onClose });
   };
 
   return (
@@ -34,7 +38,10 @@ export default function SettleTransactionModal({ transaction, isOpen, onClose })
           max={remaining / 100}
           step="0.01"
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          onChange={(event) => {
+            setAmount(event.target.value);
+            setIdempotencyKey(null);
+          }}
           required
         />
         {error && (

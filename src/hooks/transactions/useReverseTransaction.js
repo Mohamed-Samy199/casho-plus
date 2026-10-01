@@ -2,20 +2,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as transactionApi from "../../api/transaction.api";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 
-export function createIdempotencyKey() {
-  return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-}
-
-export function useCreateTransaction() {
+export function useReverseTransaction(transactionId) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ data, idempotencyKey }) =>
-      transactionApi.createTransaction(data, idempotencyKey),
+    mutationFn: ({ reason, idempotencyKey }) =>
+      transactionApi.reverseTransaction(transactionId, reason, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PARTNERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CAPITAL_SUMMARY });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CAPITAL_BY_PARTNER });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_CAPITAL });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_CAPITAL_HISTORY });
     },
   });
 }

@@ -16,6 +16,7 @@ export default function RecentTransactionsList({ transactions, showDate = false 
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-right text-text-secondary">
+            <th className="px-4 py-3 font-medium">رقم العملية</th>
             <th className="px-4 py-3 font-medium">المسؤول</th>
             <th className="px-4 py-3 font-medium">القناة</th>
             <th className="px-4 py-3 font-medium">المرحلة</th>
