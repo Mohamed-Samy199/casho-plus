@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useScrubVideo } from "../../hooks/useScrubVideo";
+import { Link } from "react-router-dom";
 
 // Below this width we swap to a second clip where the mascot is framed
 // centered instead of left-anchored — the left-framed clip crops badly
@@ -98,12 +99,13 @@ export default function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-4">
-            <a
-              href="#services"
+             <Link
+              to="/dashboard"
               className="rounded-full bg-casho-yellow px-8 py-3.5 text-[.8rem] md:text-base font-bold text-casho-blue-dark shadow-[0_8px_24px_rgba(255,210,31,0.35)] transition-transform hover:scale-[1.04]"
             >
-              اكتشف خدماتنا
-            </a>
+               لوحة التحكم
+            </Link>
+            
             <a
               href="#contact"
               className="rounded-full border-2 border-white/70 px-8 py-3.5 text-[.8rem] md:text-base font-bold text-white backdrop-blur-sm transition-colors hover:border-casho-yellow hover:text-casho-yellow"

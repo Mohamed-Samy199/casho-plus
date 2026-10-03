@@ -64,7 +64,7 @@ export default function SummaryCards({ dashboard }) {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[1.75rem] bg-[#073d70] p-5 text-white shadow-xl shadow-blue-950/15 sm:p-7">
+      <section className="relative overflow-hidden rounded-[1.75rem] bg-[#056ccf] p-5 text-white shadow-xl shadow-blue-950/15 sm:p-7">
         <div className="pointer-events-none absolute bottom-[-100px] right-1/3 h-56 w-56 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
           <div>

@@ -70,7 +70,7 @@ export default function TransactionRow({ transaction, showDate = false }) {
               <button
                 type="button"
                 onClick={() => setIsSettleOpen(true)}
-                className="whitespace-nowrap rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent"
+                className="whitespace-nowrap rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent hover:text-bg"
               >
                 سداد ({formatEGP(remaining)})
               </button>

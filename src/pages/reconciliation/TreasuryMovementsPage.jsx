@@ -2,7 +2,11 @@ import { useMemo, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  ChevronDown,
+  ChevronUp,
+  Download,
   Landmark,
+  Printer,
   RefreshCw,
   Wallet,
 } from "lucide-react";
@@ -21,6 +25,7 @@ import Spinner from "../../components/ui/Spinner";
 import Pagination from "../../components/ui/Pagination";
 import { useTreasuryMovements } from "../../hooks/reconciliation/useTreasuryMovements";
 import { formatEGP } from "../../utils/money";
+import { downloadCsv, printReport } from "../../utils/reportExport";
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -45,9 +50,30 @@ const ASSET_LABELS = {
   },
 };
 
+const MOVEMENT_COLUMNS = [
+  {
+    label: "التاريخ والوقت",
+    value: (item) => new Date(item.createdAt).toLocaleString("ar-EG"),
+  },
+  { label: "رقم العملية", value: (item) => item.referenceNumber || "—" },
+  { label: "البيان", value: (item) => item.description },
+  { label: "النوع", value: (item) => KIND_LABELS[item.kind] || item.kind },
+  {
+    label: "الداخل",
+    value: (item) => (item.inflow ? formatEGP(item.inflow) : "—"),
+  },
+  {
+    label: "الخارج",
+    value: (item) => (item.outflow ? formatEGP(item.outflow) : "—"),
+  },
+  { label: "الرصيد بعد الحركة", value: (item) => formatEGP(item.balanceAfter) },
+  { label: "المسؤول", value: (item) => item.createdBy?.name || "—" },
+];
+
 export default function TreasuryMovementsPage() {
   const today = useMemo(todayKey, []);
   const [asset, setAsset] = useState("liquidity");
+  const [showChart, setShowChart] = useState(false);
   const [filters, setFilters] = useState({
     from: today,
     to: today,
@@ -69,6 +95,34 @@ export default function TreasuryMovementsPage() {
       page: 1,
     }));
   };
+
+  const exportRows = data?.result || [];
+  const reportSubtitle = `${assetInfo.title} — من ${filters.from} إلى ${filters.to} — الصفحة ${filters.page}`;
+  const exportCsv = () =>
+    downloadCsv({
+      filename: `treasury-${asset}-${filters.from}-${filters.to}.csv`,
+      columns: MOVEMENT_COLUMNS,
+      rows: exportRows,
+    });
+  const printPdf = () =>
+    printReport({
+      title: `تقرير حركة ${assetInfo.title}`,
+      subtitle: reportSubtitle,
+      summary: [
+        {
+          label: "رصيد أول الفترة",
+          value: formatEGP(data?.openingBalance || 0),
+        },
+        { label: "إجمالي الداخل", value: formatEGP(data?.inflow || 0) },
+        { label: "إجمالي الخارج", value: formatEGP(data?.outflow || 0) },
+        {
+          label: "رصيد آخر الفترة",
+          value: formatEGP(data?.closingBalance || 0),
+        },
+      ],
+      columns: MOVEMENT_COLUMNS,
+      rows: exportRows,
+    });
 
   return (
     <div className="space-y-6">
@@ -167,56 +221,78 @@ export default function TreasuryMovementsPage() {
             />
           </div>
 
-          {/* <Card>
-            <div className="mb-4">
-              <h2 className="font-bold">تطور {assetInfo.title}</h2>
-              <p className="text-sm text-text-secondary">
-                الرسم يوضح الرصيد التراكمي بعد كل حركة خلال الفترة.
-              </p>
-            </div>
-            {data.chart?.length ? (
-              <div className="h-72 w-full" dir="ltr">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={data.chart}
-                    margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis
-                      dataKey="createdAt"
-                      tickFormatter={(value) =>
-                        new Date(value).toLocaleDateString("ar-EG")
-                      }
-                      stroke="#94a3b8"
-                    />
-                    <YAxis
-                      tickFormatter={(value) => formatEGP(value)}
-                      stroke="#94a3b8"
-                      width={80}
-                    />
-                    <Tooltip
-                      labelFormatter={(value) =>
-                        new Date(value).toLocaleString("ar-EG")
-                      }
-                      formatter={(value) => [formatEGP(value), "الرصيد"]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="balanceAfter"
-                      stroke="#22c55e"
-                      strokeWidth={3}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 5 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+          <Card>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-bold">تطور {assetInfo.title}</h2>
+                <p className="text-sm text-text-secondary">
+                  الرسم يوضح الرصيد التراكمي بعد كل حركة خلال الفترة.
+                </p>
               </div>
-            ) : (
-              <p className="py-8 text-center text-text-secondary">
-                لا توجد حركات لرسم تطور الرصيد.
-              </p>
+              <button
+                type="button"
+                onClick={() => setShowChart((previous) => !previous)}
+                aria-expanded={showChart}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-bg-raised px-4 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
+              >
+                {showChart ? (
+                  <>
+                    <ChevronUp size={16} /> إخفاء الرسم
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={16} /> عرض الرسم
+                  </>
+                )}
+              </button>
+            </div>
+            {showChart && (
+              <div className="mt-4">
+                {data.chart?.length ? (
+                  <div className="h-72 w-full" dir="ltr">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={data.chart}
+                        margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" />
+                        <XAxis
+                          dataKey="createdAt"
+                          tickFormatter={(value) =>
+                            new Date(value).toLocaleDateString("ar-EG")
+                          }
+                          stroke="#64748B"
+                        />
+                        <YAxis
+                          tickFormatter={(value) => formatEGP(value)}
+                          stroke="#64748B"
+                          width={80}
+                        />
+                        <Tooltip
+                          labelFormatter={(value) =>
+                            new Date(value).toLocaleString("ar-EG")
+                          }
+                          formatter={(value) => [formatEGP(value), "الرصيد"]}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="balanceAfter"
+                          stroke="#1284F1"
+                          strokeWidth={3}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="py-8 text-center text-text-secondary">
+                    لا توجد حركات لرسم تطور الرصيد.
+                  </p>
+                )}
+              </div>
             )}
-          </Card> */}
+          </Card>
 
           <Card>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -226,9 +302,27 @@ export default function TreasuryMovementsPage() {
                   البيان معروض بالعربية، والقيم تخص التبويب المحدد فقط.
                 </p>
               </div>
-              <div className="text-sm text-text-secondary">
-                التحويلات الداخلية: {data.internalTransferCount || 0} (
-                {formatEGP(data.internalTransferAmount || 0)})
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm text-text-secondary">
+                  التحويلات الداخلية: {data.internalTransferCount || 0} (
+                  {formatEGP(data.internalTransferAmount || 0)})
+                </div>
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  disabled={!exportRows.length}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Download size={14} /> Excel (CSV)
+                </button>
+                <button
+                  type="button"
+                  onClick={printPdf}
+                  disabled={!exportRows.length}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Printer size={14} /> PDF / طباعة
+                </button>
               </div>
             </div>
 

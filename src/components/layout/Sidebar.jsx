@@ -14,6 +14,7 @@ import {
   Wallet,
   ClipboardCheck,
   ArrowDownUp,
+  StickyNote,
 } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { ROLES } from "../../constants/roles";
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { to: "/debts", label: "الديون", icon: HandCoins },
   { to: "/partners", label: "الشركاء", icon: Building2 },
   { to: "/attendance", label: "الحضور والانصراف", icon: Clock },
+  { to: "/notes", label: "الملاحظات (النوتة)", icon: StickyNote },
 ];
 
 const ADMIN_NAV_ITEMS = [

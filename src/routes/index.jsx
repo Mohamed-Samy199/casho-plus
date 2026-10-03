@@ -21,6 +21,7 @@ import HomePage from "../pages/Homepage";
 import InternalTransfersPage from "../pages/internal-transfers/InternalTransfersPage";
 import DailyReconciliationPage from "../pages/reconciliation/DailyReconciliationPage";
 import TreasuryMovementsPage from "../pages/reconciliation/TreasuryMovementsPage";
+import NotesPage from "../pages/notes/NotesPage";
 // import HomePage from "../pages/HomePage";
 
 export const router = createBrowserRouter([
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
           // الإعدادات الشخصية والحضور/الانصراف متاحة للكل
           { path: "/settings/profile", element: <ProfilePage /> },
           { path: "/attendance", element: <AttendancePage /> },
+          { path: "/notes", element: <NotesPage /> },
           // رأس المال، قواعد العمولة، وإدارة الموظفين — أدمن بس
           {
             element: <AdminRoute />,
