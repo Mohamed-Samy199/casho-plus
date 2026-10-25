@@ -16,6 +16,7 @@ import { CHANNEL_OPTIONS, CHANNELS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
 import { useAuthStore } from "../../store/auth.store";
+import { buildOwnerAccounts } from "../../utils/accountOptions";
 import { ROLES } from "../../constants/roles";
 
 const initialForm = {
@@ -65,25 +66,10 @@ export default function NewTransactionModal({ isOpen, onClose }) {
     value: p._id,
     label: p.name,
   }));
-  const accountOptions = [
-    ...(partners || []).filter((p) => !(users || []).some((u) => String(u.partner) === String(p._id))).map((p) => ({
-      value: `Partner:${p._id}`,
-      label: `${p.name} — شريك`,
-    })),
-    ...(currentUser?.role === ROLES.ADMIN
-      ? (users || []).map((u) => ({
-          value: `User:${u._id}`,
-          label: `${u.name} — ${u.role === ROLES.ADMIN ? "أدمن" : u.role === ROLES.PARTNER ? "شريك" : "موظف"}`,
-        }))
-      : currentUser
-        ? [
-            {
-              value: `User:${currentUser._id}`,
-              label: `${currentUser.name} — حسابي`,
-            },
-          ]
-        : []),
-  ];
+  const accountOptions = buildOwnerAccounts(
+    currentUser?.role === ROLES.ADMIN ? users : [currentUser].filter(Boolean),
+    partners || [],
+  ).map(({ value, label }) => ({ value, label }));
   const clientOptions = clients.map((c) => ({ value: c._id, label: c.name }));
   const update = (field) => (e) => {
     idempotencyKeyRef.current = null;
@@ -92,7 +78,8 @@ export default function NewTransactionModal({ isOpen, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const idempotencyKey =
-      idempotencyKeyRef.current || (idempotencyKeyRef.current = createIdempotencyKey());
+      idempotencyKeyRef.current ||
+      (idempotencyKeyRef.current = createIdempotencyKey());
     createTransaction(
       {
         data: {
@@ -164,7 +151,8 @@ export default function NewTransactionModal({ isOpen, onClose }) {
               ...current,
               channel: event.target.value,
               commission:
-                event.target.value === CHANNELS.INSTAPAY && current.commission === ""
+                event.target.value === CHANNELS.INSTAPAY &&
+                current.commission === ""
                   ? "5"
                   : current.commission,
             }))

@@ -5,11 +5,14 @@ import { useUsers } from "../../hooks/users/useUsers";
 import { useAuthStore } from "../../store/auth.store";
 import { ROLES } from "../../constants/roles";
 import { STAGE_OPTIONS } from "../../constants/stages";
+import { buildOwnerAccounts } from "../../utils/accountOptions";
 
 export default function TransactionFilters({ filters, onChange }) {
   const { data: partners } = usePartners();
   const currentUser = useAuthStore((state) => state.user);
-  const { data: users = [] } = useUsers({ enabled: currentUser?.role === ROLES.ADMIN });
+  const { data: users = [] } = useUsers({
+    enabled: currentUser?.role === ROLES.ADMIN,
+  });
 
   const update = (field) => (e) => {
     const value = e.target.value;
@@ -18,23 +21,28 @@ export default function TransactionFilters({ filters, onChange }) {
     else delete nextFilters[field];
     onChange(nextFilters);
   };
-  const ownerOptions = [
-    ...(partners || []).map((partner) => ({
-      value: `Partner:${partner._id}`,
-      label: `${partner.name} — شريك`,
-    })),
-    ...(currentUser?.role === ROLES.ADMIN
-      ? users.map((user) => ({ value: `User:${user._id}`, label: `${user.name} — أدمن` }))
+  const ownerRecords =
+    currentUser?.role === ROLES.ADMIN
+      ? users
       : currentUser
-        ? [{ value: `User:${currentUser._id}`, label: `${currentUser.name} — أدمن` }]
-        : []),
-  ];
+        ? [currentUser]
+        : [];
+  const ownerOptions = buildOwnerAccounts(
+    ownerRecords,
+    currentUser?.role === ROLES.ADMIN ? partners || [] : [],
+  ).map((account) => ({ value: account.value, label: account.label }));
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
       <Select
         placeholder="كل المسؤولين"
-        value={filters.ownerId ? `${filters.ownerType || "Partner"}:${filters.ownerId}` : filters.partnerId ? `Partner:${filters.partnerId}` : ""}
+        value={
+          filters.ownerId
+            ? `${filters.ownerType || "Partner"}:${filters.ownerId}`
+            : filters.partnerId
+              ? `Partner:${filters.partnerId}`
+              : ""
+        }
         onChange={(event) => {
           const value = event.target.value;
           if (!value) {
@@ -67,8 +75,18 @@ export default function TransactionFilters({ filters, onChange }) {
         onChange={update("stage")}
         options={STAGE_OPTIONS}
       />
-      <Input type="date" placeholder="من تاريخ" value={filters.from || ""} onChange={update("from")} />
-      <Input type="date" placeholder="إلى تاريخ" value={filters.to || ""} onChange={update("to")} />
+      <Input
+        type="date"
+        placeholder="من تاريخ"
+        value={filters.from || ""}
+        onChange={update("from")}
+      />
+      <Input
+        type="date"
+        placeholder="إلى تاريخ"
+        value={filters.to || ""}
+        onChange={update("to")}
+      />
     </div>
   );
 }

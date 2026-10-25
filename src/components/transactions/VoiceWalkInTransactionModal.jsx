@@ -21,6 +21,7 @@ import {
   getVoiceSettings,
   parseVoiceTransaction,
 } from "../../utils/voiceCommand";
+import { buildOwnerAccounts } from "../../utils/accountOptions";
 
 function commissionFor(rule, amount, channel) {
   if (!rule) return channel === CHANNELS.INSTAPAY ? "5" : "";
@@ -63,21 +64,10 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
     isPending,
     error,
   } = useCreateTransaction();
-  const accounts = [
-    ...(currentUser?.role === ROLES.ADMIN
-      ? users
-      : [currentUser].filter(Boolean)
-    ).map((user) => ({
-      ...user,
-      ownerType: "User",
-      label: `${user.name} — أدمن`,
-    })),
-    ...partners.map((partner) => ({
-      ...partner,
-      ownerType: "Partner",
-      label: `${partner.name} — شريك`,
-    })),
-  ];
+  const accounts = buildOwnerAccounts(
+    currentUser?.role === ROLES.ADMIN ? users : [currentUser].filter(Boolean),
+    currentUser?.role === ROLES.ADMIN ? partners : [],
+  );
   const selectedAccount = accounts.find(
     (account) =>
       account.ownerType === form.ownerType && account._id === form.ownerId,
@@ -161,7 +151,7 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
     setForm((old) => ({
       ...old,
       stage,
-        commission: old.amount
+      commission: old.amount
         ? commissionFor(rule, egpToPiasters(old.amount), form.channel)
         : "",
     }));
@@ -169,7 +159,9 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
 
   const setChannel = (channel) => {
     idempotencyKeyRef.current = null;
-    const rule = rules.find((item) => item.channel === channel && item.stage === form.stage);
+    const rule = rules.find(
+      (item) => item.channel === channel && item.stage === form.stage,
+    );
     setForm((old) => ({
       ...old,
       channel,
@@ -237,20 +229,21 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
   const submit = (event) => {
     event.preventDefault();
     const idempotencyKey =
-      idempotencyKeyRef.current || (idempotencyKeyRef.current = createIdempotencyKey());
+      idempotencyKeyRef.current ||
+      (idempotencyKeyRef.current = createIdempotencyKey());
     createTransaction(
       {
         data: {
-        ownerType: form.ownerType,
-        ownerId: form.ownerId,
-        phoneNumber: form.phoneNumber,
-        channel: form.channel,
-        stage: form.stage,
-        partyType: PARTY_TYPES.WALK_IN,
-        amount: egpToPiasters(form.amount),
-        ...(form.commission !== "" && {
-          commission: egpToPiasters(form.commission),
-        }),
+          ownerType: form.ownerType,
+          ownerId: form.ownerId,
+          phoneNumber: form.phoneNumber,
+          channel: form.channel,
+          stage: form.stage,
+          partyType: PARTY_TYPES.WALK_IN,
+          amount: egpToPiasters(form.amount),
+          ...(form.commission !== "" && {
+            commission: egpToPiasters(form.commission),
+          }),
         },
         idempotencyKey,
       },

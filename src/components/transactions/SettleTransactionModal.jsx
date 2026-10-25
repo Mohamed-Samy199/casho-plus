@@ -8,6 +8,7 @@ import { useUsers } from "../../hooks/users/useUsers";
 import { usePartners } from "../../hooks/partners/usePartners";
 import { formatEGP, egpToPiasters } from "../../utils/money";
 import { CHANNEL_LABELS } from "../../constants/channels";
+import { buildOwnerAccounts } from "../../utils/accountOptions";
 
 const PAYMENT_METHODS = [
   { value: "liquidity", label: "سيولة نقدية" },
@@ -31,20 +32,7 @@ export default function SettleTransactionModal({
   const [idempotencyKey, setIdempotencyKey] = useState(null);
   const { mutate, isPending, error } = useSettleTransaction(transaction._id);
   const accounts = useMemo(
-    () => [
-      ...users.map((item) => ({
-        ...item,
-        type: "User",
-        value: `User:${item._id}`,
-        label: `${item.name} — أدمن`,
-      })),
-      ...partners.map((item) => ({
-        ...item,
-        type: "Partner",
-        value: `Partner:${item._id}`,
-        label: `${item.name} — شريك`,
-      })),
-    ],
+    () => buildOwnerAccounts(users, partners),
     [users, partners],
   );
   const selected = accounts.find((item) => item.value === account);

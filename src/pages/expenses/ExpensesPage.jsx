@@ -51,8 +51,17 @@ const ASSET_LABELS = { liquidity: "السيولة النقدية", wallet: "رص
 const ownerValue = (account) => `${account.type}:${account.id}`;
 const getBalance = (wallet, type) =>
   type === "wallet" ? wallet.walletBalance : wallet.liquidityBalance;
-const accountLabel = (account) =>
-  `${account.name} — ${account.type === "User" ? "أدمن" : "شريك"}`;
+const accountLabel = (account) => {
+  const roleLabel =
+    account.type === "Partner"
+      ? "شريك"
+      : account.role === "admin"
+        ? "أدمن"
+        : account.role === "partner"
+          ? "شريك"
+          : "موظف";
+  return `${account.name} — ${roleLabel}`;
+};
 
 function walletLabel(wallet, balanceType) {
   return `${wallet.phoneNumber} · ${CHANNEL_LABELS[wallet.channel] || wallet.channel} · متاح ${formatEGP(getBalance(wallet, balanceType))}`;
@@ -219,8 +228,8 @@ export default function ExpensesPage() {
       await createExpense.mutateAsync({
         category: form.category,
         description: form.description,
-        sourceOwnerType: sourceAccount.type,
-        sourceOwnerId: sourceAccount.id,
+        sourceOwnerType: sourceWallet.ownerType || sourceAccount.type,
+        sourceOwnerId: sourceWallet.ownerId || sourceAccount.id,
         sourceWalletId: sourceWallet.id,
         balanceType: form.balanceType,
         amount: amountPiasters,
@@ -249,7 +258,7 @@ export default function ExpensesPage() {
         <div className="flex gap-2">
           <button
             onClick={() => refetch()}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-white hover:bg-accent"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:bg-bg-raised"
             title="تحديث"
           >
             <RefreshCw size={17} />
@@ -363,7 +372,7 @@ export default function ExpensesPage() {
                         {item.description}
                       </p>
                       {item.borrower?.name && (
-                        <p className="mt-1 text-xs text-accent">
+                        <p className="mt-1 text-xs text-amber-400">
                           المستفيد: {item.borrower.name}
                         </p>
                       )}
@@ -372,7 +381,7 @@ export default function ExpensesPage() {
                       {formatEGP(item.amount)}
                       {item.category === "advance" &&
                         item.remainingAmount > 0 && (
-                          <p className="text-xs font-normal text-accent">
+                          <p className="text-xs font-normal text-amber-400">
                             متبقي: {formatEGP(item.remainingAmount)}
                           </p>
                         )}

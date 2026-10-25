@@ -53,7 +53,7 @@ const EMPTY = {
 };
 const ownerValue = (account) => `${account.type}:${account.id}`;
 const accountLabel = (account) =>
-  `${account.name} — ${account.type === "User" ? "أدمن" : "شريك"}`;
+  `${account.name} — ${account.type === "Partner" ? "شريك" : account.role === "partner" ? "شريك" : account.role === "admin" ? "أدمن" : "موظف"}`;
 
 const walletLabel = (wallet) =>
   `${wallet.phoneNumber} · ${CHANNEL_LABELS[wallet.channel] || wallet.channel} · الرصيد ${formatEGP(wallet.walletBalance || 0)}`;

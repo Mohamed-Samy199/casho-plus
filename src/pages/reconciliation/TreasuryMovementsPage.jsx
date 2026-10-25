@@ -23,6 +23,7 @@ import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import Spinner from "../../components/ui/Spinner";
 import Pagination from "../../components/ui/Pagination";
+import Modal from "../../components/ui/Modal";
 import { useTreasuryMovements } from "../../hooks/reconciliation/useTreasuryMovements";
 import { formatEGP } from "../../utils/money";
 import { downloadCsv, printReport } from "../../utils/reportExport";
@@ -59,7 +60,15 @@ const MOVEMENT_COLUMNS = [
   { label: "رقم العملية", value: (item) => item.referenceNumber || "—" },
   { label: "البيان", value: (item) => item.description },
   { label: "النوع", value: (item) => KIND_LABELS[item.kind] || item.kind },
-  { label: "القناة", value: (item) => item.channel === "vodafone_cash" ? "فودافون كاش" : item.channel === "instapay" ? "إنستا باي" : "—" },
+  {
+    label: "القناة",
+    value: (item) =>
+      item.channel === "vodafone_cash"
+        ? "فودافون كاش"
+        : item.channel === "instapay"
+          ? "إنستا باي"
+          : "—",
+  },
   {
     label: "الداخل",
     value: (item) => (item.inflow ? formatEGP(item.inflow) : "—"),
@@ -76,6 +85,7 @@ export default function TreasuryMovementsPage() {
   const today = useMemo(todayKey, []);
   const [asset, setAsset] = useState("liquidity");
   const [showChart, setShowChart] = useState(false);
+  const [detailsType, setDetailsType] = useState(null);
   const [filters, setFilters] = useState({
     from: today,
     to: today,
@@ -208,12 +218,14 @@ export default function TreasuryMovementsPage() {
               value={data.inflow}
               icon={ArrowDownToLine}
               tone="text-accent"
+              onClick={() => setDetailsType("inflow")}
             />
             <SummaryCard
               title="إجمالي الخارج"
               value={data.outflow}
               icon={ArrowUpFromLine}
               tone="text-danger"
+              onClick={() => setDetailsType("outflow")}
             />
             <SummaryCard
               title="رصيد آخر الفترة المتوقع"
@@ -222,10 +234,30 @@ export default function TreasuryMovementsPage() {
               tone="text-accent"
             />
           </div>
+          <TreasuryDetailsModal
+            type={detailsType}
+            assetTitle={assetInfo.title}
+            items={
+              detailsType === "inflow"
+                ? data.inflowDetails
+                : data.outflowDetails
+            }
+            onClose={() => setDetailsType(null)}
+          />
           {asset === "wallet" && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <SummaryCard title={<ChannelLogo channel="vodafone_cash" />} value={data.channelBalances?.vodafone_cash || 0} icon={Wallet} tone="text-accent" />
-              <SummaryCard title={<ChannelLogo channel="instapay" />} value={data.channelBalances?.instapay || 0} icon={Wallet} tone="text-accent" />
+              <SummaryCard
+                title={<ChannelLogo channel="vodafone_cash" />}
+                value={data.channelBalances?.vodafone_cash || 0}
+                icon={Wallet}
+                tone="text-accent"
+              />
+              <SummaryCard
+                title={<ChannelLogo channel="instapay" />}
+                value={data.channelBalances?.instapay || 0}
+                icon={Wallet}
+                tone="text-accent"
+              />
             </div>
           )}
 
@@ -376,7 +408,11 @@ export default function TreasuryMovementsPage() {
                             {KIND_LABELS[item.kind] || item.kind}
                           </td>
                           <td className="px-3 py-3">
-                            {item.channel ? <ChannelLogo channel={item.channel} size="sm" /> : "—"}
+                            {item.channel ? (
+                              <ChannelLogo channel={item.channel} size="sm" />
+                            ) : (
+                              "—"
+                            )}
                           </td>
                           <td className="px-3 py-3 text-accent">
                             {item.inflow ? formatEGP(item.inflow) : "—"}
@@ -413,18 +449,115 @@ export default function TreasuryMovementsPage() {
   );
 }
 
-function SummaryCard({ title, value, icon: Icon, tone = "text-white" }) {
+function SummaryCard({
+  title,
+  value,
+  icon: Icon,
+  tone = "text-white",
+  onClick,
+}) {
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-text-secondary">{title}</p>
-          <p className={`mt-3 text-2xl font-bold ${tone}`}>
-            {formatEGP(value)}
-          </p>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!onClick}
+        className={`w-full text-right ${onClick ? "cursor-pointer rounded-lg transition-colors hover:bg-bg-raised" : "cursor-default"}`}
+        title={onClick ? "اضغط لعرض تفاصيل المبلغ" : undefined}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm text-text-secondary">{title}</p>
+            <p className={`mt-3 text-2xl font-bold ${tone}`}>
+              {formatEGP(value)}
+            </p>
+          </div>
+          <Icon size={22} className="text-accent" />
         </div>
-        <Icon size={22} className="text-accent" />
-      </div>
+        {onClick && (
+          <p className="mt-3 text-xs text-text-secondary">اضغط لعرض التفاصيل</p>
+        )}
+      </button>
     </Card>
+  );
+}
+
+function TreasuryDetailsModal({ type, assetTitle, items = [], onClose }) {
+  const isInflow = type === "inflow";
+  return (
+    <Modal
+      title={`${isInflow ? "تفاصيل إجمالي الداخل" : "تفاصيل إجمالي الخارج"} — ${assetTitle}`}
+      isOpen={Boolean(type)}
+      onClose={onClose}
+    >
+      <div className="space-y-3" dir="rtl">
+        <div
+          className={`rounded-xl p-3 text-sm ${isInflow ? "bg-accent-soft text-accent" : "bg-danger/10 text-danger"}`}
+        >
+          {isInflow
+            ? "المبالغ التي زادت رصيد الخزينة خلال الفترة:"
+            : "المبالغ التي خرجت من رصيد الخزينة خلال الفترة:"}
+        </div>
+        {!items.length ? (
+          <p className="py-8 text-center text-text-secondary">
+            لا توجد تفاصيل لهذه القيمة في الفترة المحددة.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-border bg-bg-raised p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">
+                      {item.description || "حركة مالية"}
+                    </p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {KIND_LABELS[item.kind] || item.kind} ·{" "}
+                      {new Date(item.createdAt).toLocaleString("ar-EG")}
+                    </p>
+                    {item.accountName && (
+                      <p className="mt-1 text-xs text-text-secondary">
+                        الحساب: {item.accountName}
+                      </p>
+                    )}
+                    {item.phoneNumber && (
+                      <p className="text-xs text-text-secondary">
+                        الرقم: {item.phoneNumber}
+                      </p>
+                    )}
+                    {item.channel &&
+                      !["wallet", "liquidity"].includes(item.channel) && (
+                        <p className="text-xs text-text-secondary">
+                          القناة:{" "}
+                          {item.channel === "vodafone_cash"
+                            ? "فودافون كاش"
+                            : item.channel === "instapay"
+                              ? "إنستا باي"
+                              : item.channel}
+                        </p>
+                      )}
+                  </div>
+                  <strong className={isInflow ? "text-accent" : "text-danger"}>
+                    {formatEGP(isInflow ? item.inflow : item.outflow)}
+                  </strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="border-t border-border pt-3 text-left font-bold">
+          الإجمالي:{" "}
+          {formatEGP(
+            items.reduce(
+              (sum, item) => sum + (isInflow ? item.inflow : item.outflow),
+              0,
+            ),
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 }
