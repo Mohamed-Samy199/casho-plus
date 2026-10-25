@@ -10,6 +10,7 @@ import Spinner from "../../components/ui/Spinner";
 import { formatEGP } from "../../utils/money";
 import { useAuthStore } from "../../store/auth.store";
 import { ROLE_LABELS, ROLES } from "../../constants/roles";
+import { CHANNELS } from "../../constants/channels";
 
 export default function PartnerDetailPage() {
   const { id } = useParams();
@@ -78,6 +79,17 @@ export default function PartnerDetailPage() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card>
+          <p className="text-sm text-text-secondary">رصيد فودافون كاش</p>
+          <p className="mt-1 text-xl font-bold">{formatEGP(partner.walletBalanceByChannel?.[CHANNELS.VODAFONE_CASH] || 0)}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-text-secondary">رصيد إنستا باي</p>
+          <p className="mt-1 text-xl font-bold">{formatEGP(partner.walletBalanceByChannel?.[CHANNELS.INSTAPAY] || 0)}</p>
+        </Card>
+      </div>
+
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">الأرقام/الشرايح</h2>
@@ -91,7 +103,7 @@ export default function PartnerDetailPage() {
             </button>
           )}
         </div>
-        <PartnerLinesBreakdown partnerId={id} lines={partner.lines} />
+        <PartnerLinesBreakdown partnerId={id} phoneNumbers={partner.phoneNumbers} lines={partner.lines} />
       </div>
 
       {isAdmin && (

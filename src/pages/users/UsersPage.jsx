@@ -35,6 +35,7 @@ export default function UsersPage() {
   const showPartners = filter === "all" || filter === "partner";
   const visibleUsers =
     filter === "all" ? users || [] : (users || []).filter((user) => user.role === filter);
+  const visiblePartners = partners || [];
   const isLoading = usersLoading || partnersLoading;
   const isError = usersError || partnersError;
 
@@ -128,11 +129,11 @@ export default function UsersPage() {
       {!isLoading && !isError && showPartners && (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-white">الشركاء</h2>
-          {!partners?.length ? (
+          {!visiblePartners.length ? (
             <EmptyState message="لا يوجد شركاء بعد." />
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {partners.map((partner) => (
+              {visiblePartners.map((partner) => (
                 <PartnerCard key={partner._id} partner={partner} />
               ))}
             </div>

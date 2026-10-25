@@ -5,12 +5,19 @@ import Spinner from "../../components/ui/Spinner";
 import { useMyCapital, useMyBalanceHistory } from "../../hooks/capital/useMyCapital";
 import MyBalanceAdjustmentModal from "../../components/capital/MyBalanceAdjustmentModal";
 import { formatEGP } from "../../utils/money";
-import { CHANNEL_LABELS } from "../../constants/channels";
+import { CHANNELS, CHANNEL_LABELS } from "../../constants/channels";
+import Select from "../../components/ui/Select";
+import { useAuthStore } from "../../store/auth.store";
+import { useAddWalletChannel } from "../../hooks/capital/useAddWalletChannel";
+import { ChannelLogo } from "../../components/ui/ChannelLogo";
 
 export default function MyCapitalPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: capital, isLoading, isError, error } = useMyCapital();
   const { data: history, isLoading: isHistoryLoading } = useMyBalanceHistory();
+  const currentUser = useAuthStore((s) => s.user);
+  const { mutate: addChannel, isPending: isAddingChannel, error: addChannelError } = useAddWalletChannel();
+  const [channelSelection, setChannelSelection] = useState({});
 
   if (isLoading || isHistoryLoading) return <div className="flex justify-center py-16"><Spinner /></div>;
   if (isError || !capital) {
@@ -33,9 +40,28 @@ export default function MyCapitalPage() {
         <Card><p className="text-sm text-text-secondary">إجمالي رصيدي</p><p className="mt-2 text-2xl font-bold">{formatEGP(capital.liquidity + capital.walletBalance)}</p></Card>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card><ChannelLogo channel="vodafone_cash" /><p className="mt-2 text-2xl font-bold">{formatEGP(capital.walletBalanceByChannel?.vodafone_cash || 0)}</p></Card>
+        <Card><ChannelLogo channel="instapay" /><p className="mt-2 text-2xl font-bold">{formatEGP(capital.walletBalanceByChannel?.instapay || 0)}</p></Card>
+      </div>
+
       <Card>
         <h2 className="mb-3 text-lg font-semibold">المحافظ الخاصة بي</h2>
-        {!capital.lines?.length ? <p className="text-sm text-text-secondary">لا توجد محافظ مضافة بعد.</p> : <div className="grid gap-2 sm:grid-cols-2">{capital.lines.map((line) => <div key={`${line.channel}-${line.phoneNumber}`} className="rounded-lg bg-bg-raised p-3 text-sm"><p className="font-medium">{line.phoneNumber}</p><p className="text-text-secondary">{CHANNEL_LABELS[line.channel]}</p><p className="mt-1">سيولة: {formatEGP(line.liquidityBalance)} · محفظة: {formatEGP(line.walletBalance)}</p></div>)}</div>}
+        {!capital.lines?.length ? <p className="text-sm text-text-secondary">لا توجد محافظ مضافة بعد.</p> : <div className="grid gap-2 sm:grid-cols-2">{capital.lines.map((line) => <div key={`${line.channel}-${line.phoneNumber}`} className="rounded-lg bg-bg-raised p-3 text-sm"><p className="font-medium">{line.phoneNumber}</p><div className="mt-1"><ChannelLogo channel={line.channel} size="sm" /></div><p className="mt-1">سيولة: {formatEGP(line.liquidityBalance)} · محفظة: {formatEGP(line.walletBalance)}</p></div>)}</div>}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-lg font-semibold">إضافة قناة لأحد أرقامي</h2>
+        <p className="mb-3 text-sm text-text-secondary">تُضاف القناة برصيد ابتدائي صفر، ثم يمكنك استخدامها في العمليات وإضافة الرصيد.</p>
+        <div className="space-y-3">
+          {(currentUser?.phoneNumbers || []).map((phoneNumber) => {
+            const existing = new Set((capital.lines || []).filter((line) => line.phoneNumber === phoneNumber).map((line) => line.channel));
+            const options = Object.values(CHANNELS).filter((channel) => !existing.has(channel));
+            if (!options.length) return <p key={phoneNumber} className="rounded-lg bg-bg-raised p-3 text-sm">{phoneNumber} — القناتان مضافتان بالفعل.</p>;
+            return <div key={phoneNumber} className="flex flex-col gap-2 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><Select label={phoneNumber} value={channelSelection[phoneNumber] || ""} onChange={(event) => setChannelSelection((old) => ({ ...old, [phoneNumber]: event.target.value }))} options={options.map((channel) => ({ value: channel, label: CHANNEL_LABELS[channel] }))} placeholder="اختر القناة" /></div><button type="button" disabled={!channelSelection[phoneNumber] || isAddingChannel} onClick={() => addChannel({ ownerType: "User", ownerId: currentUser._id, phoneNumber, channel: channelSelection[phoneNumber] })} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg disabled:opacity-50">إضافة القناة</button></div>;
+          })}
+        </div>
+        {addChannelError && <p className="mt-2 text-sm text-danger">{addChannelError.response?.data?.message || "تعذر إضافة القناة."}</p>}
       </Card>
 
       <Card>

@@ -6,6 +6,7 @@ import SubmitButton from "../ui/SubmitButton";
 import { useCreateDebt } from "../../hooks/debts/useCreateDebt";
 import { usePartners } from "../../hooks/partners/usePartners";
 import { useClients } from "../../hooks/clients/useClients";
+import { useUsers } from "../../hooks/users/useUsers";
 import { DEBT_DIRECTION_OPTIONS, DEBT_DIRECTIONS } from "../../constants/debt";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
@@ -23,6 +24,7 @@ export default function AddDebtModal({ isOpen, onClose }) {
   const [form, setForm] = useState(initialForm);
   const { data: partners } = usePartners({ isActive: true });
   const { data: clientsResult } = useClients({ isActive: true });
+  const { data: users = [] } = useUsers();
   const clients = clientsResult?.result || [];
 
   const { mutate: createDebt, isPending, error } = useCreateDebt();
@@ -64,7 +66,10 @@ export default function AddDebtModal({ isOpen, onClose }) {
             label="مرتبط بـ"
             value={form.partyType}
             onChange={(e) => setForm((f) => ({ ...f, partyType: e.target.value, partyId: "" }))}
-            options={Object.values(PARTY_TYPES).map((v) => ({ value: v, label: PARTY_TYPE_LABELS[v] }))}
+            options={[
+              ...[PARTY_TYPES.CLIENT, PARTY_TYPES.PARTNER].map((v) => ({ value: v, label: PARTY_TYPE_LABELS[v] })),
+              { value: "User", label: "أدمن" },
+            ]}
           />
 
           {form.partyType === PARTY_TYPES.CLIENT ? (
@@ -74,6 +79,15 @@ export default function AddDebtModal({ isOpen, onClose }) {
               value={form.partyId}
               onChange={update("partyId")}
               options={clients.map((c) => ({ value: c._id, label: c.name }))}
+              required
+            />
+          ) : form.partyType === "User" ? (
+            <Select
+              label="الأدمن"
+              placeholder="اختر الأدمن"
+              value={form.partyId}
+              onChange={update("partyId")}
+              options={users.filter((user) => user.isActive !== false).map((user) => ({ value: user._id, label: user.name }))}
               required
             />
           ) : (

@@ -9,6 +9,7 @@ import { useBalanceHistory } from "../../hooks/capital/useBalanceHistory";
 import { formatEGP } from "../../utils/money";
 import { CHANNEL_LABELS } from "../../constants/channels";
 import Modal from "../../components/ui/Modal";
+import { ChannelLogo } from "../../components/ui/ChannelLogo";
 
 const DETAIL_CONFIG = {
   totalCapital: {
@@ -33,7 +34,10 @@ const DETAIL_CONFIG = {
   },
   walletBalance: {
     title: "تفاصيل الرصيد الإلكتروني",
-    sections: [{ label: "المساهمون في المحافظ", key: "walletBalance", sign: 1 }],
+    sections: [
+      { label: "مساهمو فودافون كاش", key: "walletVodafone", sign: 1 },
+      { label: "مساهمو إنستا باي", key: "walletInstapay", sign: 1 },
+    ],
   },
   owedToMe: {
     title: "تفاصيل ديون ليا",
@@ -90,6 +94,16 @@ function CapitalDetailsModal({ detailKey, contributors, onClose }) {
                   {section.sign < 0 ? "−" : ""}{formatEGP(total)}
                 </span>
               </div>
+              {section.key === "walletBalance" && (
+                <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {[["فودافون كاش", "walletVodafone"], ["إنستا باي", "walletInstapay"]].map(([label, key]) => (
+                    <div key={key} className="rounded-lg border border-border bg-bg-raised px-3 py-2">
+                      <ChannelLogo channel={key === "walletVodafone" ? "vodafone_cash" : "instapay"} size="sm" />
+                      <p className="mt-1 font-bold">{formatEGP((contributors?.[key] || []).reduce((sum, row) => sum + row.amount, 0))}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               {!rows.length ? (
                 <p className="text-sm text-text-secondary">لا توجد بيانات</p>
               ) : (
@@ -231,6 +245,21 @@ export default function CapitalPage() {
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard
+          label={<ChannelLogo channel="vodafone_cash" />}
+          value={formatEGP(summary.breakdown.walletBalanceByChannel?.vodafone_cash || 0)}
+          description="إجمالي رصيد المحفظة الإلكترونية الموجود على محافظ فودافون كاش فقط."
+          onDetails={() => setDetailsKey("walletBalance")}
+        />
+        <StatCard
+          label={<ChannelLogo channel="instapay" />}
+          value={formatEGP(summary.breakdown.walletBalanceByChannel?.instapay || 0)}
+          description="إجمالي رصيد المحفظة الإلكترونية الموجود على حسابات إنستا باي فقط."
+          onDetails={() => setDetailsKey("walletBalance")}
+        />
+      </div>
+
       <div>
         <h2 className="mb-3 text-lg font-semibold text-white">تفاصيل الحسابات</h2>
 
@@ -262,9 +291,7 @@ export default function CapitalPage() {
                   >
                     <p className="font-medium">{line.phoneNumber}</p>
 
-                    <p className="text-text-secondary">
-                      {CHANNEL_LABELS[line.channel]}
-                    </p>
+                    <div className="mt-1"><ChannelLogo channel={line.channel} size="sm" /></div>
 
                     <p className="mt-1">
                       سيولة: {formatEGP(line.liquidityBalance)} · محفظة:{" "}

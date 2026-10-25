@@ -15,14 +15,21 @@ export const createTransaction = (data, idempotencyKey) =>
 export const getTransaction = (id) =>
   httpClient.get(`/transactions/${id}`).then((res) => res.data.data);
 
-export const settleTransaction = (id, amount, idempotencyKey) =>
-  httpClient
-    .patch(
-      `/transactions/${id}/settle`,
-      { amount },
-      { headers: { "Idempotency-Key": idempotencyKey } }
-    )
+export const settleTransaction = (id, dataOrAmount, keyOrIdempotency, legacyIdempotency) => {
+  const isNewSignature = dataOrAmount && typeof dataOrAmount === "object";
+  const data = isNewSignature ? { ...dataOrAmount } : { amount: dataOrAmount };
+  const idempotencyKey = isNewSignature ? keyOrIdempotency : legacyIdempotency || keyOrIdempotency;
+
+  // حماية من النسخة القديمة التي كانت تضع object داخل amount.
+  if (data.amount && typeof data.amount === "object") data.amount = data.amount.amount;
+  if (data.commission && typeof data.commission === "object") data.commission = data.commission.amount;
+
+  return httpClient
+    .patch(`/transactions/${id}/settle`, data, {
+      headers: { "Idempotency-Key": idempotencyKey },
+    })
     .then((res) => res.data.data);
+};
 
 export const reverseTransaction = (id, reason, idempotencyKey) =>
   httpClient
@@ -33,11 +40,24 @@ export const reverseTransaction = (id, reason, idempotencyKey) =>
     )
     .then((res) => res.data.data);
 
-export const correctTransaction = (id, targetStage, reason, idempotencyKey) =>
-  httpClient
-    .post(
-      `/transactions/${id}/correct`,
-      { targetStage, reason },
-      { headers: { "Idempotency-Key": idempotencyKey } }
-    )
+export const correctTransaction = (id, dataOrTargetStage, reasonOrKey, legacyKey) => {
+  const isNewSignature = dataOrTargetStage && typeof dataOrTargetStage === "object";
+  const data = isNewSignature
+    ? dataOrTargetStage
+    : { targetStage: String(dataOrTargetStage || ""), reason: reasonOrKey || "" };
+  const idempotencyKey = isNewSignature ? reasonOrKey : legacyKey;
+
+  // حماية إضافية: لا تسمح بإرسال object كقيمة للمرحلة.
+  if (data.targetStage !== undefined) {
+    const rawStage = data.targetStage;
+    data.targetStage = typeof rawStage === "string"
+      ? rawStage
+      : rawStage?.value || rawStage?.target?.value || "";
+  }
+
+  return httpClient
+    .post(`/transactions/${id}/correct`, data, {
+      headers: { "Idempotency-Key": idempotencyKey },
+    })
     .then((res) => res.data.data);
+};

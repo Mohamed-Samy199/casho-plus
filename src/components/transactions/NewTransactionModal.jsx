@@ -12,7 +12,7 @@ import {
   createIdempotencyKey,
   useCreateTransaction,
 } from "../../hooks/transactions/useCreateTransaction";
-import { CHANNEL_OPTIONS } from "../../constants/channels";
+import { CHANNEL_OPTIONS, CHANNELS } from "../../constants/channels";
 import { PARTY_TYPES, PARTY_TYPE_LABELS } from "../../constants/partyTypes";
 import { egpToPiasters } from "../../utils/money";
 import { useAuthStore } from "../../store/auth.store";
@@ -24,12 +24,11 @@ const initialForm = {
   phoneNumber: "",
   channel: CHANNEL_OPTIONS[0]?.value || "",
   stage: "",
-  partyType: PARTY_TYPES.CLIENT,
+  partyType: PARTY_TYPES.WALK_IN,
   partyId: "",
   amount: "",
   commission: "",
   agreedDueAt: "",
-  lateCommissionPerThousand: "",
   notes: "",
 };
 function toLocalDateTimeValue(date) {
@@ -67,14 +66,14 @@ export default function NewTransactionModal({ isOpen, onClose }) {
     label: p.name,
   }));
   const accountOptions = [
-    ...(partners || []).map((p) => ({
+    ...(partners || []).filter((p) => !(users || []).some((u) => String(u.partner) === String(p._id))).map((p) => ({
       value: `Partner:${p._id}`,
       label: `${p.name} — شريك`,
     })),
     ...(currentUser?.role === ROLES.ADMIN
       ? (users || []).map((u) => ({
           value: `User:${u._id}`,
-          label: `${u.name} — أدمن`,
+          label: `${u.name} — ${u.role === ROLES.ADMIN ? "أدمن" : u.role === ROLES.PARTNER ? "شريك" : "موظف"}`,
         }))
       : currentUser
         ? [
@@ -113,12 +112,6 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           ...(form.agreedDueAt && {
             agreedDueAt: new Date(form.agreedDueAt).toISOString(),
           }),
-          ...(isKeyClient &&
-            form.lateCommissionPerThousand !== "" && {
-              lateCommissionPerThousand: egpToPiasters(
-                form.lateCommissionPerThousand,
-              ),
-            }),
           notes: form.notes,
         },
         idempotencyKey,
@@ -166,7 +159,16 @@ export default function NewTransactionModal({ isOpen, onClose }) {
         <Select
           label="الوسيلة"
           value={form.channel}
-          onChange={update("channel")}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              channel: event.target.value,
+              commission:
+                event.target.value === CHANNELS.INSTAPAY && current.commission === ""
+                  ? "5"
+                  : current.commission,
+            }))
+          }
           options={CHANNEL_OPTIONS}
         />
         <StageSelector
@@ -178,7 +180,12 @@ export default function NewTransactionModal({ isOpen, onClose }) {
             label="نوع الطرف الآخر"
             value={form.partyType}
             onChange={(e) =>
-              setForm((f) => ({ ...f, partyType: e.target.value, partyId: "" }))
+              setForm((f) => ({
+                ...f,
+                partyType: e.target.value,
+                partyId: "",
+                commission: e.target.value === PARTY_TYPES.CLIENT ? "0" : "",
+              }))
             }
             options={Object.values(PARTY_TYPES).map((v) => ({
               value: v,
@@ -191,20 +198,10 @@ export default function NewTransactionModal({ isOpen, onClose }) {
               placeholder="دوّر على عميل"
               value={form.partyId}
               onChange={(val) => {
-                const client = clients.find((item) => item._id === val);
-                const hours = client?.keyClientSettings?.defaultAgreedHours;
-                const defaultFee =
-                  client?.keyClientSettings?.defaultLateCommission;
                 setForm((f) => ({
                   ...f,
                   partyId: val,
-                  agreedDueAt: hours
-                    ? toLocalDateTimeValue(
-                        new Date(Date.now() + hours * 3600000),
-                      )
-                    : "",
-                  lateCommissionPerThousand:
-                    defaultFee !== undefined ? String(defaultFee / 100) : "5",
+                  commission: "0",
                 }));
               }}
               options={clientOptions}
@@ -246,21 +243,12 @@ export default function NewTransactionModal({ isOpen, onClose }) {
           />
         </div>
         {isKeyClient && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <Input
-              label="تاريخ ووقت السداد المتفق عليه"
-              type="datetime-local"
+              label="تاريخ السداد المتفق عليه"
+              type="date"
               value={form.agreedDueAt}
               onChange={update("agreedDueAt")}
-              required
-            />
-            <Input
-              label="العمولة لكل 1000 جنيه / يوم"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.lateCommissionPerThousand}
-              onChange={update("lateCommissionPerThousand")}
               required
             />
           </div>

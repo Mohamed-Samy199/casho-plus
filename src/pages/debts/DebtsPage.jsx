@@ -53,6 +53,7 @@ export default function DebtsPage() {
               <tr className="border-b border-border text-right text-base text-text-secondary">
                 <th className="px-4 py-4 font-medium">النوع</th>
                 <th className="px-4 py-4 font-medium">الوصف</th>
+                <th className="px-4 py-4 font-medium">تاريخ الاستحقاق</th>
                 <th className="px-4 py-4 font-medium">القيمة الأصلية</th>
                 <th className="px-4 py-4 font-medium">المتبقي</th>
                 <th className="px-4 py-4 font-medium">أثر على رأس المال</th>

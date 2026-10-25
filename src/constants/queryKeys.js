@@ -14,4 +14,6 @@ export const QUERY_KEYS = {
   MY_CAPITAL_HISTORY: ["capital", "me", "history"],
   DAILY_RECONCILIATION: (date) => ["capital", "reconciliation", date],
   COMMISSION_RULES: ["commission-rules"],
+  EXPENSES: (filters = {}) => ["expenses", filters],
+  EXPENSE_ACCOUNTS: ["expenses", "accounts"],
 };

@@ -26,6 +26,7 @@ import Pagination from "../../components/ui/Pagination";
 import { useTreasuryMovements } from "../../hooks/reconciliation/useTreasuryMovements";
 import { formatEGP } from "../../utils/money";
 import { downloadCsv, printReport } from "../../utils/reportExport";
+import { ChannelLogo } from "../../components/ui/ChannelLogo";
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -58,6 +59,7 @@ const MOVEMENT_COLUMNS = [
   { label: "رقم العملية", value: (item) => item.referenceNumber || "—" },
   { label: "البيان", value: (item) => item.description },
   { label: "النوع", value: (item) => KIND_LABELS[item.kind] || item.kind },
+  { label: "القناة", value: (item) => item.channel === "vodafone_cash" ? "فودافون كاش" : item.channel === "instapay" ? "إنستا باي" : "—" },
   {
     label: "الداخل",
     value: (item) => (item.inflow ? formatEGP(item.inflow) : "—"),
@@ -220,6 +222,12 @@ export default function TreasuryMovementsPage() {
               tone="text-accent"
             />
           </div>
+          {asset === "wallet" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <SummaryCard title={<ChannelLogo channel="vodafone_cash" />} value={data.channelBalances?.vodafone_cash || 0} icon={Wallet} tone="text-accent" />
+              <SummaryCard title={<ChannelLogo channel="instapay" />} value={data.channelBalances?.instapay || 0} icon={Wallet} tone="text-accent" />
+            </div>
+          )}
 
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -342,6 +350,7 @@ export default function TreasuryMovementsPage() {
                         <th className="px-3 py-3 font-medium">رقم العملية</th>
                         <th className="px-3 py-3 font-medium">البيان</th>
                         <th className="px-3 py-3 font-medium">النوع</th>
+                        <th className="px-3 py-3 font-medium">القناة</th>
                         <th className="px-3 py-3 font-medium">الداخل</th>
                         <th className="px-3 py-3 font-medium">الخارج</th>
                         <th className="px-3 py-3 font-medium">
@@ -365,6 +374,9 @@ export default function TreasuryMovementsPage() {
                           <td className="px-3 py-3">{item.description}</td>
                           <td className="px-3 py-3 text-text-secondary">
                             {KIND_LABELS[item.kind] || item.kind}
+                          </td>
+                          <td className="px-3 py-3">
+                            {item.channel ? <ChannelLogo channel={item.channel} size="sm" /> : "—"}
                           </td>
                           <td className="px-3 py-3 text-accent">
                             {item.inflow ? formatEGP(item.inflow) : "—"}

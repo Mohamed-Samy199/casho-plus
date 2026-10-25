@@ -73,21 +73,7 @@ export default function ClientDetailPage() {
         </div>
 
         {client.type === CLIENT_TYPES.KEY_CLIENT && (
-          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4">
-            <div>
-              <p className="text-sm text-text-secondary">الميعاد المتفق عليه</p>
-              <p className="font-medium">{client.keyClientSettings?.defaultAgreedHours ?? 24} ساعة</p>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">عمولة التأخير الافتراضية</p>
-              <p className="font-medium">
-                {((client.keyClientSettings?.defaultLateCommission ?? 500) / 100).toLocaleString(
-                  "ar-EG"
-                )}{" "}
-                جنيه
-              </p>
-            </div>
-          </div>
+          <div className="mt-4 border-t border-border pt-4 text-sm text-text-secondary">يتم تحديد تاريخ الاستحقاق وعمولة السداد لكل عملية بشكل مستقل.</div>
         )}
       </Card>
 

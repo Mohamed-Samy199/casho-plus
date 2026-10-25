@@ -72,7 +72,7 @@ export default function AddPartnerModal({ isOpen, onClose }) {
           <span>
             <span className="block font-medium">إنشاء حساب دخول للشريك الآن</span>
             <span className="mt-1 block text-xs text-text-secondary">
-              سيبدأ الحساب بصلاحية أدمن ويمكن تغييرها لاحقًا من إدارة المستخدمين.
+              غير محدد افتراضيًا. عند تفعيله سيتم إنشاء حساب دخول بصلاحية شريك.
             </span>
           </span>
         </label>

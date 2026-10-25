@@ -54,14 +54,15 @@ export default function KeyClientsPage() {
               <tr className="border-b border-border text-right text-text-secondary">
                 <th className="px-4 py-3 font-medium">الاسم</th>
                 <th className="px-4 py-3 font-medium">أرقام التلفون</th>
-                <th className="px-4 py-3 font-medium">الميعاد المتفق عليه</th>
-                <th className="px-4 py-3 font-medium">عمولة التأخير</th>
+                <th className="px-4 py-3 font-medium">عليه للمكتب</th>
+                <th className="px-4 py-3 font-medium">له عند المكتب</th>
+                <th className="px-4 py-3 font-medium">أقرب استحقاق</th>
                 <th className="px-4 py-3 font-medium">الحالة</th>
               </tr>
             </thead>
             <tbody>
               {keyClients.map((client) => (
-                <ClientRow key={client._id} client={client} showKeyClientSettings />
+                <ClientRow key={client._id} client={client} />
               ))}
             </tbody>
           </table>

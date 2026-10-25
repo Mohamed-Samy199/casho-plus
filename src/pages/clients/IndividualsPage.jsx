@@ -57,7 +57,7 @@ export default function IndividualsPage() {
             </thead>
             <tbody>
               {individuals.map((client) => (
-                <ClientRow key={client._id} client={client} />
+                <ClientRow key={client._id} client={client} variant="individual" />
               ))}
             </tbody>
           </table>

@@ -23,7 +23,11 @@ export function useChangeUserRole() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ userId, role }) => authApi.changeUserRole(userId, role),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: USERS_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 }
 

@@ -81,7 +81,7 @@ export default function TransactionRow({ transaction, showDate = false }) {
                 onClick={() => setIsCorrectionOpen(true)}
                 className="whitespace-nowrap rounded-lg bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger/20"
               >
-                تصحيح العملية
+                تعديل العملية
               </button>
             )}
             {t.reversedAt && (

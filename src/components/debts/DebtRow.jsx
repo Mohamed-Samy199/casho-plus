@@ -18,11 +18,14 @@ export default function DebtRow({ debt, onRepay }) {
           year: "numeric",
         })
       : "لا توجد دفعات بعد";
+  const formatDueDate = (date) =>
+    date ? new Date(date).toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" }) : "غير محدد";
 
   return (
     <tr className="border-b border-border last:border-0">
       <td className="px-4 py-3 text-text-secondary">{DEBT_DIRECTION_LABELS[debt.direction]}</td>
       <td className="px-4 py-3">{debt.description || "—"}</td>
+      <td className="px-4 py-3 text-text-secondary">{formatDueDate(debt.dueDate)}</td>
       <td className="px-4 py-3 font-medium">{formatEGP(debt.amount)}</td>
       <td className="px-4 py-3 text-text-secondary">{formatEGP(debt.remainingAmount)}</td>
       <td className="px-4 py-3">
@@ -81,6 +84,10 @@ export default function DebtRow({ debt, onRepay }) {
                 <div className="flex items-center justify-between gap-4 border-b border-border pb-2">
                   <span className="text-text-secondary">المتبقي</span>
                   <span className="font-medium">{formatEGP(debt.remainingAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-border pb-2">
+                  <span className="text-text-secondary">تاريخ الاستحقاق</span>
+                  <span className="text-left text-sm font-medium">{formatDueDate(debt.dueDate)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 border-b border-border pb-2">
                   <span className="text-text-secondary">تاريخ آخر دفعة</span>

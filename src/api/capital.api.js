@@ -9,6 +9,9 @@ export const getCapitalByPartner = () =>
 export const adjustBalance = (data) =>
   httpClient.post("/capital/balance-adjustments", data ).then((res) => res.data.data);
 
+export const addWalletChannel = (data) =>
+  httpClient.post("/capital/wallet-channels", data).then((res) => res.data.data);
+
 export const getBalanceHistory = (params) =>
   httpClient.get("/capital/balance-history", { params } ).then((res) => res.data.data);
 

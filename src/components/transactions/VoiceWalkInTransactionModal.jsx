@@ -11,7 +11,7 @@ import {
   useCreateTransaction,
 } from "../../hooks/transactions/useCreateTransaction";
 import { useCommissionRules } from "../../hooks/commission-rules/useCommissionRules";
-import { CHANNEL_OPTIONS } from "../../constants/channels";
+import { CHANNEL_OPTIONS, CHANNELS } from "../../constants/channels";
 import { STAGE_OPTIONS } from "../../constants/stages";
 import { PARTY_TYPES } from "../../constants/partyTypes";
 import { ROLES } from "../../constants/roles";
@@ -22,8 +22,8 @@ import {
   parseVoiceTransaction,
 } from "../../utils/voiceCommand";
 
-function commissionFor(rule, amount) {
-  if (!rule) return "";
+function commissionFor(rule, amount, channel) {
+  if (!rule) return channel === CHANNELS.INSTAPAY ? "5" : "";
   if (rule.type === "flat") return String(piastersToEGP(rule.flatAmount || 0));
   if (rule.proportionalThreshold > 0 && amount >= rule.proportionalThreshold)
     return String(
@@ -161,9 +161,23 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
     setForm((old) => ({
       ...old,
       stage,
-      commission: old.amount
-        ? commissionFor(rule, egpToPiasters(old.amount))
+        commission: old.amount
+        ? commissionFor(rule, egpToPiasters(old.amount), form.channel)
         : "",
+    }));
+  };
+
+  const setChannel = (channel) => {
+    idempotencyKeyRef.current = null;
+    const rule = rules.find((item) => item.channel === channel && item.stage === form.stage);
+    setForm((old) => ({
+      ...old,
+      channel,
+      commission: old.amount
+        ? commissionFor(rule, egpToPiasters(old.amount), channel)
+        : channel === CHANNELS.INSTAPAY
+          ? "5"
+          : old.commission,
     }));
   };
 
@@ -209,7 +223,7 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
         amount: parsed.amount ? String(parsed.amount) : old.amount,
         commission:
           parsed.stage && parsed.amount
-            ? commissionFor(rule, egpToPiasters(parsed.amount))
+            ? commissionFor(rule, egpToPiasters(parsed.amount), form.channel)
             : old.commission,
       }));
       if (parsed.missing.length)
@@ -317,6 +331,13 @@ export default function VoiceWalkInTransactionModal({ isOpen, onClose }) {
                 onChange={update("phoneNumber")}
                 options={phoneOptions}
                 placeholder="اختر الرقم"
+                required
+              />
+              <Select
+                label="الوسيلة"
+                value={form.channel}
+                onChange={(event) => setChannel(event.target.value)}
+                options={CHANNEL_OPTIONS}
                 required
               />
               <Select

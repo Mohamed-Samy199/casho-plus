@@ -22,6 +22,8 @@ import InternalTransfersPage from "../pages/internal-transfers/InternalTransfers
 import DailyReconciliationPage from "../pages/reconciliation/DailyReconciliationPage";
 import TreasuryMovementsPage from "../pages/reconciliation/TreasuryMovementsPage";
 import NotesPage from "../pages/notes/NotesPage";
+import ExpensesPage from "../pages/expenses/ExpensesPage";
+import PendingFundsPage from "../pages/pending-funds/PendingFundsPage";
 // import HomePage from "../pages/HomePage";
 
 export const router = createBrowserRouter([
@@ -54,6 +56,8 @@ export const router = createBrowserRouter([
               { path: "/daily-reconciliation", element: <DailyReconciliationPage /> },
               { path: "/treasury-movements", element: <TreasuryMovementsPage /> },
               { path: "/internal-transfers", element: <InternalTransfersPage /> },
+              { path: "/expenses", element: <ExpensesPage /> },
+              { path: "/pending-funds", element: <PendingFundsPage /> },
               { path: "/my-capital", element: <MyCapitalPage /> },
               { path: "/settings/commission-rules", element: <CommissionRulesPage /> },
               { path: "/users", element: <UsersPage /> },

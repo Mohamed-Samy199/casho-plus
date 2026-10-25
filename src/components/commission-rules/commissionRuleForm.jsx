@@ -6,6 +6,7 @@ import SubmitButton from "../ui/SubmitButton";
 import { useUpsertCommissionRule } from "../../hooks/commission-rules/useCommissionRules";
 import { STAGE_LABELS } from "../../constants/stages";
 import { CHANNEL_LABELS } from "../../constants/channels";
+import { CHANNELS } from "../../constants/channels";
 import { egpToPiasters, piastersToEGP } from "../../utils/money";
 
 const TYPE_OPTIONS = [
@@ -14,8 +15,9 @@ const TYPE_OPTIONS = [
 ];
 
 export default function CommissionRuleForm({ channel, stage, rule }) {
+  const defaultCommission = channel === CHANNELS.INSTAPAY ? 5 : 0;
   const [type, setType] = useState(rule?.type || "flat");
-  const [flatAmount, setFlatAmount] = useState(String(piastersToEGP(rule?.flatAmount || 0)));
+  const [flatAmount, setFlatAmount] = useState(String(piastersToEGP(rule?.flatAmount ?? defaultCommission * 100)));
   const [proportionalRate, setProportionalRate] = useState(
     String(piastersToEGP(rule?.proportionalRate || 0))
   );

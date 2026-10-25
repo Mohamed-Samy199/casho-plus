@@ -15,6 +15,8 @@ import {
   ClipboardCheck,
   ArrowDownUp,
   StickyNote,
+  Receipt,
+  CircleAlert,
 } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { ROLES } from "../../constants/roles";
@@ -36,6 +38,8 @@ const ADMIN_NAV_ITEMS = [
   { to: "/treasury-movements", label: "حركة الخزينة", icon: ArrowDownUp },
   { to: "/my-capital", label: "ماليتي", icon: Wallet },
   { to: "/internal-transfers", label: "التحويلات الداخلية", icon: Repeat2 },
+  { to: "/expenses", label: "المصروفات", icon: Receipt },
+  { to: "/pending-funds", label: "الأموال المعلقة", icon: CircleAlert },
   { to: "/settings/commission-rules", label: "قواعد العمولة", icon: Settings },
   { to: "/users", label: "الموظفين", icon: UserCog },
 ];

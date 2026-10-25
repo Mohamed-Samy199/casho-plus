@@ -7,36 +7,93 @@ import DailyReconciliationCard from "../../components/reconciliation/DailyReconc
 import { useDailyReconciliationHistory } from "../../hooks/reconciliation/useDailyReconciliation";
 import { formatEGP } from "../../utils/money";
 import { downloadCsv, printReport } from "../../utils/reportExport";
+import { ChannelLogo } from "../../components/ui/ChannelLogo";
 
 const RECONCILIATION_COLUMNS = [
   { label: "اليوم", value: (item) => item.dateKey },
   { label: "العمليات", value: (item) => item.transactionCount || 0 },
-  { label: "السيولة المتوقعة", value: (item) => formatEGP(item.expectedLiquidity) },
-  { label: "السيولة الفعلية", value: (item) => formatEGP(item.actualLiquidity) },
+  {
+    label: "السيولة المتوقعة",
+    value: (item) => formatEGP(item.expectedLiquidity),
+  },
+  {
+    label: "السيولة الفعلية",
+    value: (item) => formatEGP(item.actualLiquidity),
+  },
   { label: "فرق السيولة", value: (item) => formatEGP(item.liquidityVariance) },
-  { label: "المحافظ المتوقعة", value: (item) => formatEGP(item.expectedWalletBalance) },
-  { label: "المحافظ الفعلية", value: (item) => formatEGP(item.actualWalletBalance) },
+  {
+    label: "المحافظ المتوقعة",
+    value: (item) => formatEGP(item.expectedWalletBalance),
+  },
+  {
+    label: "المحافظ الفعلية",
+    value: (item) => formatEGP(item.actualWalletBalance),
+  },
+  {
+    label: "فودافون كاش",
+    value: (item) =>
+      formatEGP(item.expectedWalletBalanceByChannel?.vodafone_cash || 0),
+  },
+  {
+    label: "إنستا باي",
+    value: (item) =>
+      formatEGP(item.expectedWalletBalanceByChannel?.instapay || 0),
+  },
+  {
+    label: "الخوارج",
+    value: (item) =>
+      formatEGP(Math.abs(item.expenseBreakdown?.outflow?.total || 0)),
+  },
+  {
+    label: "الأصول",
+    value: (item) =>
+      formatEGP(Math.abs(item.expenseBreakdown?.asset?.total || 0)),
+  },
+  {
+    label: "السُلف",
+    value: (item) =>
+      formatEGP(Math.abs(item.expenseBreakdown?.advance?.total || 0)),
+  },
+  {
+    label: "أموال معلقة",
+    value: (item) => formatEGP(item.pendingFundsBreakdown?.suspended || 0),
+  },
+  {
+    label: "إرجاعات معلقة",
+    value: (item) => formatEGP(item.pendingFundsBreakdown?.returned || 0),
+  },
   { label: "فرق المحافظ", value: (item) => formatEGP(item.walletVariance) },
   { label: "اعتمد بواسطة", value: (item) => item.closedBy?.name || "-" },
 ];
 
 export default function DailyReconciliationPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useDailyReconciliationHistory({ page, size: 10 });
-  const exportRows = data?.result || [];
-  const exportCsv = () => downloadCsv({ filename: `daily-reconciliation-page-${page}.csv`, columns: RECONCILIATION_COLUMNS, rows: exportRows });
-  const printPdf = () => printReport({
-    title: "تقرير التقفيلات اليومية",
-    subtitle: `سجل التقفيلات المعتمدة — الصفحة ${page}`,
-    columns: RECONCILIATION_COLUMNS,
-    rows: exportRows,
+  const { data, isLoading, isError, error } = useDailyReconciliationHistory({
+    page,
+    size: 10,
   });
+  const exportRows = data?.result || [];
+  const exportCsv = () =>
+    downloadCsv({
+      filename: `daily-reconciliation-page-${page}.csv`,
+      columns: RECONCILIATION_COLUMNS,
+      rows: exportRows,
+    });
+  const printPdf = () =>
+    printReport({
+      title: "تقرير التقفيلات اليومية",
+      subtitle: `سجل التقفيلات المعتمدة — الصفحة ${page}`,
+      columns: RECONCILIATION_COLUMNS,
+      rows: exportRows,
+    });
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-white">التقفيل اليومي</h1>
-        <p className="mt-1 text-sm text-white/60">اعتماد تقفيل اليوم ومراجعة سجل الأيام السابقة.</p>
+        <p className="mt-1 text-sm text-white/60">
+          اعتماد تقفيل اليوم ومراجعة سجل الأيام السابقة.
+        </p>
       </div>
 
       <DailyReconciliationCard />
@@ -47,17 +104,41 @@ export default function DailyReconciliationPage() {
             <ClipboardList size={20} className="text-accent" />
             <div>
               <h2 className="font-bold">سجل التقفيلات السابقة</h2>
-              <p className="text-sm text-text-secondary">الأيام المعتمدة فقط، من الأحدث إلى الأقدم.</p>
+              <p className="text-sm text-text-secondary">
+                الأيام المعتمدة فقط، من الأحدث إلى الأقدم.
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={exportCsv} disabled={!exportRows.length} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"><Download size={14} /> Excel (CSV)</button>
-            <button type="button" onClick={printPdf} disabled={!exportRows.length} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"><Printer size={14} /> PDF / طباعة</button>
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={!exportRows.length}
+              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download size={14} /> Excel (CSV)
+            </button>
+            <button
+              type="button"
+              onClick={printPdf}
+              disabled={!exportRows.length}
+              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Printer size={14} /> PDF / طباعة
+            </button>
           </div>
         </div>
 
-        {isLoading && <div className="flex justify-center py-10"><Spinner /></div>}
-        {isError && <p className="py-8 text-center text-danger">تعذر تحميل السجل: {error?.response?.data?.message || error?.message}</p>}
+        {isLoading && (
+          <div className="flex justify-center py-10">
+            <Spinner />
+          </div>
+        )}
+        {isError && (
+          <p className="py-8 text-center text-danger">
+            تعذر تحميل السجل: {error?.response?.data?.message || error?.message}
+          </p>
+        )}
 
         {data && !data.result?.length && (
           <div className="rounded-xl bg-bg-raised p-8 text-center text-sm text-text-secondary">
@@ -80,25 +161,101 @@ export default function DailyReconciliationPage() {
                     <th className="px-3 py-3 font-medium">المحافظ المتوقعة</th>
                     <th className="px-3 py-3 font-medium">المحافظ الفعلية</th>
                     <th className="px-3 py-3 font-medium">فرق المحافظ</th>
+                    <th className="px-3 py-3 font-medium">
+                      <ChannelLogo channel="vodafone_cash" size="sm" />
+                    </th>
+                    <th className="px-3 py-3 font-medium">
+                      <ChannelLogo channel="instapay" size="sm" />
+                    </th>
+                    <th className="px-3 py-3 font-medium">الخوارج</th>
+                    <th className="px-3 py-3 font-medium">الأصول</th>
+                    <th className="px-3 py-3 font-medium">السُلف</th>
+                    <th className="px-3 py-3 font-medium">أموال معلقة</th>
+                    <th className="px-3 py-3 font-medium">إرجاعات معلقة</th>
                     <th className="px-3 py-3 font-medium">اعتمد بواسطة</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.result.map((item) => (
-                    <tr key={item._id} className="border-b border-border last:border-0">
+                    <tr
+                      key={item._id}
+                      className="border-b border-border last:border-0"
+                    >
                       <td className="px-3 py-3 font-medium">{item.dateKey}</td>
-                      <td className="px-3 py-3">{item.transactionCount || 0}</td>
-                      <td className="px-3 py-3">{formatEGP(item.expectedLiquidity)}</td>
-                      <td className="px-3 py-3">{formatEGP(item.actualLiquidity)}</td>
-                      <td className={`px-3 py-3 font-medium ${item.liquidityVariance === 0 ? "text-accent" : "text-danger"}`}>
+                      <td className="px-3 py-3">
+                        {item.transactionCount || 0}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.expectedLiquidity)}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.actualLiquidity)}
+                      </td>
+                      <td
+                        className={`px-3 py-3 font-medium ${item.liquidityVariance === 0 ? "text-accent" : "text-danger"}`}
+                      >
                         {formatEGP(item.liquidityVariance)}
                       </td>
-                      <td className="px-3 py-3">{formatEGP(item.expectedWalletBalance)}</td>
-                      <td className="px-3 py-3">{formatEGP(item.actualWalletBalance)}</td>
-                      <td className={`px-3 py-3 font-medium ${item.walletVariance === 0 ? "text-accent" : "text-danger"}`}>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.expectedWalletBalance)}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.actualWalletBalance)}
+                      </td>
+                      <td
+                        className={`px-3 py-3 font-medium ${item.walletVariance === 0 ? "text-accent" : "text-danger"}`}
+                      >
                         {formatEGP(item.walletVariance)}
                       </td>
-                      <td className="px-3 py-3">{item.closedBy?.name || "-"}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <ChannelLogo
+                            channel="vodafone_cash"
+                            showLabel={false}
+                            size="sm"
+                          />
+                          {formatEGP(
+                            item.expectedWalletBalanceByChannel
+                              ?.vodafone_cash || 0,
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <ChannelLogo
+                            channel="instapay"
+                            showLabel={false}
+                            size="sm"
+                          />
+                          {formatEGP(
+                            item.expectedWalletBalanceByChannel?.instapay || 0,
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(
+                          Math.abs(item.expenseBreakdown?.outflow?.total || 0),
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(
+                          Math.abs(item.expenseBreakdown?.asset?.total || 0),
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(
+                          Math.abs(item.expenseBreakdown?.advance?.total || 0),
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.pendingFundsBreakdown?.suspended || 0)}
+                      </td>
+                      <td className="px-3 py-3">
+                        {formatEGP(item.pendingFundsBreakdown?.returned || 0)}
+                      </td>
+                      <td className="px-3 py-3">
+                        {item.closedBy?.name || "-"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
