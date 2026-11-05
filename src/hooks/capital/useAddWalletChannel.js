@@ -7,10 +7,20 @@ export function useAddWalletChannel() {
 
   return useMutation({
     mutationFn: capitalApi.addWalletChannel,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CAPITAL_SUMMARY });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CAPITAL_BY_PARTNER });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_CAPITAL });
+
+      // تحديث قائمة الشركاء وتفاصيل الشريك فور إضافة القناة
+      // بدلًا من انتظار عمل Refresh للمتصفح.
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PARTNERS });
+
+      if (variables?.ownerType === "Partner" && variables?.ownerId) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PARTNER(variables.ownerId),
+        });
+      }
     },
   });
 }

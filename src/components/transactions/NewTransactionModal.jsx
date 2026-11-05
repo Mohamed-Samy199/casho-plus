@@ -21,7 +21,7 @@ import { ROLES } from "../../constants/roles";
 
 const initialForm = {
   partnerId: "",
-  ownerType: "Partner",
+  ownerType: "",
   phoneNumber: "",
   channel: CHANNEL_OPTIONS[0]?.value || "",
   stage: "",
@@ -117,10 +117,13 @@ export default function NewTransactionModal({ isOpen, onClose }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Select
           label="صاحب الحساب المالي"
-          placeholder="اختر الشريك أو الأدمن"
-          value={`${form.ownerType}:${form.partnerId}`}
+          placeholder="اختار الحساب المالي"
+          value={form.ownerType && form.partnerId ? `${form.ownerType}:${form.partnerId}` : ""}
           onChange={(event) => {
-            const [ownerType, ownerId] = event.target.value.split(":");
+            const selectedValue = event.target.value;
+            if (!selectedValue) return;
+
+            const [ownerType, ownerId] = selectedValue.split(":");
             setForm((f) => ({
               ...f,
               ownerType,
